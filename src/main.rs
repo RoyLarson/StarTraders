@@ -1,3 +1,5 @@
+use startraders::instructions;
+
 fn main() {
-    println!("Hello, world!");
+    instructions::print_instructions();
 }
