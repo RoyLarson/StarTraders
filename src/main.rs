@@ -1,5 +1,7 @@
-use startraders::instructions;
+mod instructions;
+
+use instructions::print_instructions;
 
 fn main() {
-    instructions::print_instructions();
+    print_instructions();
 }
