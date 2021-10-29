@@ -1,6 +1,26 @@
 
 use std::io;
 
+pub fn query_to_display_instructions(){
+    println!("DOES ANYONE NEED INSTRUCTIONS: Y/y (yes)");
+    let mut input = String::new();
+
+    io::stdin().read_line(&mut input).expect("Did not get an answer");
+    input = input.chars().filter(|c| !c.is_whitespace()).collect();
+
+
+    match input.as_str()=="y" {
+        true=>{
+            println!("Input is y: {}", &input);
+            print_instructions();
+        }
+        _=>{
+            println!("Input is not y: {}", &input);
+            println!("Input chars: {:?}", &input.chars());
+        }
+    }
+}
+
 pub fn print_instructions() {
     let page1 = concat!(
         "   STAR LANES IS A GAME OF INTERSTELLAR TRADING.\n",

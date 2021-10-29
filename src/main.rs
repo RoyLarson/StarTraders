@@ -1,7 +1,10 @@
 mod instructions;
 
-use instructions::print_instructions;
+use instructions::query_to_display_instructions;
+use std::io;
+
 
 fn main() {
-    print_instructions();
+    query_to_display_instructions();
+
 }
