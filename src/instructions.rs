@@ -11,13 +11,9 @@ pub fn query_to_display_instructions(){
 
     match input.as_str()=="y" {
         true=>{
-            println!("Input is y: {}", &input);
             print_instructions();
         }
-        _=>{
-            println!("Input is not y: {}", &input);
-            println!("Input chars: {:?}", &input.chars());
-        }
+        false=>{}
     }
 }
 
