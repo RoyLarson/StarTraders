@@ -24,7 +24,7 @@ impl Player{
         stocks.insert(Company::CAPELLA,0);
         stocks.insert(Company::DENEBOLA,0);
         stocks.insert(Company::ERIDANI,0);
-        Player{name:name, balance:0, stocks:stocks}
+        Player{name:name, balance:100, stocks:stocks}
 
     }
 }
