@@ -6,8 +6,7 @@ pub fn query_to_display_instructions(){
     let mut input = String::new();
 
     io::stdin().read_line(&mut input).expect("Did not get an answer");
-    input = input.chars().filter(|c| !c.is_whitespace()).collect();
-
+    input = input.trim().to_string();
 
     match input.as_str()=="y" {
         true=>{
