@@ -1,12 +1,12 @@
 
 use std::io;
+use dialoguer::Input;
 
 pub fn query_to_display_instructions(){
-    println!("DOES ANYONE NEED INSTRUCTIONS: Y/y (yes)");
-    let mut input = String::new();
-
-    io::stdin().read_line(&mut input).expect("Did not get an answer");
-    input = input.trim().to_string();
+    let input = Input::<String>::new()
+    .with_prompt("DOES ANYONE NEED INSTRUCTIONS: Y/y")
+    .default("No".into())
+    .interact().unwrap();
 
     match input.as_str()=="y" {
         true=>{
