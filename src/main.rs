@@ -5,7 +5,6 @@ use std::io;
 use startraders::{Player, Board, play_game};
 use dialoguer::Input;
 use rand::prelude::*;
-use rand::seq::SliceRandom;
 
 
 
