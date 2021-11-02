@@ -71,7 +71,7 @@ impl Board {
         Board{spaces:spaces}
 
     }
-    pub fn get_legal_moves(&self)->Vec<&Location>{
+    pub fn get_legal_moves(&self){
         let mut open_locations= Vec::<Location>::new();
         for (location, occupation) in &self.spaces{
             match occupation{
@@ -81,8 +81,7 @@ impl Board {
                 _=>{}
             }
         }
-        let locations: Vec<_> = open_locations.choose_multiple(&mut rand::thread_rng(), 5).collect();
-        locations.copy()
+        println!("Options\n{:?}", open_locations.choose_multiple(&mut rand::thread_rng(), 5).collect::<Vec<&Location>>().to_owned());
     }
 }
 
@@ -95,10 +94,14 @@ fn test_board_creation(){
 pub fn play_game(game_board: Board, players: Vec<Player>) {
     let mut players_turn:usize = 0;
     for _ in 0..48{
+        let current_player = &players[players_turn];
         let legal_moves = game_board.get_legal_moves();
         println!("The moves are: {:?}", legal_moves);
+
+
+        players_turn+=1;
+        players_turn = players_turn % players.len();
     }
-    let current_player = &players[players_turn];
 
 }
 
