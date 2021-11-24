@@ -39,6 +39,14 @@ impl fmt::Display for Moves{
     }
 }
 
+impl Moves {
+    pub fn contains(&self, loc: &Location) -> bool {
+        for move_loc in &self.0[0..self.0.len()]{
+            if move_loc == loc { return true}
+        }
+        return false
+    }
+} 
 pub struct Board {
     pub spaces: HashMap<Location,LocationOccupancy>
 }

@@ -1,7 +1,8 @@
 use std::str::FromStr;
 use std::fmt;
+use std::cmp;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Eq, Hash)]
 pub struct Location{
     pub x: String,
     pub y: String,
@@ -12,6 +13,12 @@ pub enum ParsePointError {
     FailedParse(String),
     Not2Dimensional(usize),
     NonNumeric,
+}
+
+impl fmt::Display for ParsePointError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl FromStr for Location {
@@ -59,11 +66,27 @@ impl FromStr for Location {
 
 impl fmt::Display for Location{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Write strictly the first element into the supplied output
-        // stream: `f`. Returns `fmt::Result` which indicates whether the
-        // operation succeeded or failed. Note that `write!` uses syntax which
-        // is very similar to `println!`.
         write!(f, "{}{}", self.x, self.y)
+    }
+}
+
+impl cmp::PartialEq<String> for Location{
+    fn eq(&self, other: &String) -> bool{
+        let str_rep = format!("{}{}", self.x, self.y);
+        str_rep.as_str() == other
+    }
+}
+
+impl cmp::PartialEq<str> for Location{
+    fn eq(&self, other: &str) -> bool{
+        let str_rep = format!("{}{}", self.x, self.y);
+        str_rep.as_str() == other
+    }
+}
+
+impl cmp::PartialEq<Location> for Location{
+    fn eq(&self, other: &Location) -> bool{
+        self.x == other.x && self.y == other.y
     }
 }
 
