@@ -1,7 +1,7 @@
 mod instructions;
 
 use instructions::query_to_display_instructions;
-use std::io;
+
 use startraders::{Player, Board, play_game};
 use dialoguer::Input;
 use rand::prelude::*;
@@ -36,7 +36,7 @@ fn main() {
         .with_prompt("Input a game board number")
         .interact()
         .unwrap();
-    let mut game_board = Board::new(board_seed);
+    let game_board = Board::new(board_seed);
     play_game(game_board, players);
 
 }

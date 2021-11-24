@@ -37,15 +37,15 @@ impl FromStr for Location {
         if coords.len() != 2 {
             return Err(ParsePointError::Not2Dimensional(coords.len()));
         }
-        let x = Some(match &coords.chars().nth(0) {
+        let x = Some(match &coords.chars().next() {
             Some(c) => c.to_string(),
-            None => return Err(ParsePointError::FailedParse(format!("X value is not a char "))),
+            None => return Err(ParsePointError::FailedParse("X value is not a char ".to_string())),
             }
         );
 
         let y = Some(match &coords.chars().nth(1) {
             Some(c) => c.to_string(),
-            None => return Err(ParsePointError::FailedParse(format!("Y value is not a char"))),
+            None => return Err(ParsePointError::FailedParse("Y value is not a char".to_string())),
             }
          );
         

@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use rand::prelude::*;
 use rand_pcg::Pcg64;
-use std::str::FromStr;
+
 use std::fmt;
 use crate::location::Location;
 
@@ -61,7 +61,7 @@ impl Board {
             }
         }
 
-        Board{spaces:spaces}
+        Board{spaces}
 
     }
     pub fn get_legal_moves(&self)->Moves {
@@ -84,5 +84,5 @@ impl Board {
 
 #[test]
 fn test_board_creation(){
-    let board = Board::new(42);
+    let _board = Board::new(42);
 }
