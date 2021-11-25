@@ -54,12 +54,12 @@ pub struct Board {
 impl Board {
     pub fn new(seed: usize)->Board {
         let mut rng= Pcg64::seed_from_u64(seed as u64);
-        let columns = "ABCDEFGHIJKL".to_string();
-        let rows = "123456789".to_string();
+        let columns: Vec<char> = "ABCDEFGHIJKL".chars().collect();
+        let rows: Vec<char> = "123456789".chars().collect();
         let mut spaces: HashMap<Location,LocationOccupancy> = HashMap::new();
 
-        for l in columns.chars() {
-            for n in rows.chars(){
+        for l in &columns {
+            for n in &rows{
                 let rand_num:f64 = rng.gen();
                 if rand_num<0.05{
                     spaces.insert(Location{x:l.to_string(), y:l.to_string()}, LocationOccupancy::STAR);
@@ -88,6 +88,10 @@ impl Board {
         }
         Moves(moves)
     }
+    // fn location_neighbors(&self, &location)->Vec<Location>{
+    //     let mut locations = Vec::<Location>::new();
+    //     let x_ind = self.rows.chars().iter().position(|&r| r == location.x.chars()).unwrap();
+    // }
 }
 
 #[test]
