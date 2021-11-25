@@ -48,7 +48,9 @@ impl Moves {
     }
 } 
 pub struct Board {
-    pub spaces: HashMap<Location,LocationOccupancy>
+    pub spaces: HashMap<Location,LocationOccupancy>,
+    columns: Vec<char>,
+    rows: Vec<char>
 }
 
 impl Board {
@@ -69,7 +71,7 @@ impl Board {
             }
         }
 
-        Board{spaces}
+        Board{spaces, columns, rows}
 
     }
     pub fn get_legal_moves(&self)->Moves {
@@ -88,10 +90,21 @@ impl Board {
         }
         Moves(moves)
     }
-    // fn location_neighbors(&self, &location)->Vec<Location>{
-    //     let mut locations = Vec::<Location>::new();
-    //     let x_ind = self.rows.chars().iter().position(|&r| r == location.x.chars()).unwrap();
-    // }
+    fn location_neighbors(&self, location:&Location)->Vec<Location>{
+        let mut locations = Vec::<Location>::new();
+        let x_ind = self.columns.iter().position(|&r| r.to_string() == location.x).unwrap();
+        let y_ind = self.columns.iter().position(|&r| r.to_string() == location.y).unwrap();
+        let positions = vec![(x_ind-1, y_ind), (x_ind+1, y_ind), (x_ind, y_ind-1), (x_ind, y_ind+1)];
+        for pos in positions{
+            match pos{
+                (0..=12, 0..=9)=>{
+                    locations.push(Location{x:self.columns[pos.0].to_string(), y:self.rows[pos.1].to_string()})
+                }
+                _=>{}
+            }
+        }
+        locations
+    }
 }
 
 #[test]
