@@ -5,7 +5,18 @@
 35 DEFINT C
 36 DEFINT I
 40 DIM M(10,13),S(5,4),N$(5),D1(5),S1(5),Q(5),M$(12),C$(25)
-50 DIM C1$(25),C2$(25)
+' M = MAP
+' S = Company to player holdings
+' N$ player names
+' D1 = TODO: figure out what
+' S1 = Company stock values
+' Q = TODO: figure out what
+' M$ = Map column names
+' C$ = TODO: figure out what
+50 DIM C1$(25),C2$(25),B(5) 'B what not originally dimmed
+' C1$ = TODO: figure out what
+' C2$ = TODO: figure out what
+' B = TODO: figure out what
 60 DATA 1,"'ALTAIR STARWAYS'"
 70 DATA 2,"'BETELGEUSE,LTD.'"
 80 DATA 3,"'CAPELLA FREIGHT CO.'"
@@ -18,8 +29,8 @@
 150 S(I,J)=0: D1(I)=0: S1(I)=100: Q(I)=0: B(I)=6000
 160    NEXT J
 170   NEXT I
-180 L$=".+*ABCDE"
-190 M$="ABCDEFGHIJKL"
+180 L$=".+*ABCDE" ' Map characters
+190 M$="ABCDEFGHIJKL" ' Map column names
 195 PRINT "              **********   STAR TRADERS   **********":PRINT
 197 PRINT:PRINT
 200 INPUT "TYPE A 3 DIGIT NUMBER  ";R1
@@ -67,16 +78,18 @@
 620 R(I)=INT(9*RND(R1)+1)
 630 C(I)=INT(12*RND(R1)+1)
 640    FOR I1=I-1 TO 0 STEP -1
-650 IF R(I)=R(I1) AND C(I)=C(I1) THEN  620
+650 IF R(I)=R(I1) AND C(I)=C(I1) THEN  620 'IF space already in list try again
 660    NEXT I1
-670 IF M(R(I),C(I))>1 THEN 620
+670 IF M(R(I),C(I))>1 THEN 620 'If space occupied try again
 680    FOR I1=1 TO 5
-690 IF Q(I1)=0 THEN  870
+690 IF Q(I1)=0 THEN  870 'IF Q(I1) is 0 accept postion TODO: Q 
 700    NEXT I1
-710 IF M(R(I),C(I)+1)>3 THEN 870
+710 IF M(R(I),C(I)+1)>3 THEN 870 'If current location is next to company accept
 720 IF M(R(I),C(I)-1)>3 THEN 870
 730 IF M(R(I)+1,C(I))>3 THEN 870
 740 IF M(R(I)-1,C(I))>3 THEN 870
+' If one neighbor is a star or a selected space
+' and the other neighbors are not a company then try again
 750 A1=M(R(I),C(I)+1)
 760 A2=M(R(I),C(I)-1)
 770 A3=M(R(I)+1,C(I))
