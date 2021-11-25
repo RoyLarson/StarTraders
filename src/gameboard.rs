@@ -44,7 +44,7 @@ impl Moves {
         for move_loc in &self.0[0..self.0.len()]{
             if move_loc == loc { return true}
         }
-        return false
+        false
     }
 } 
 pub struct Board {
