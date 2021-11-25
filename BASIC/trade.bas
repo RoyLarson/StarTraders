@@ -37,7 +37,7 @@
 220 R1=RND(-R1/1000)
 230   FOR I=1 TO 9
 240    FOR J=1 TO 12
-250 IF INT(20*RND(R1)+1)<>10 THEN M(I,J)=1 ELSE M(I,J)=3
+250 IF INT(20*RND(R1)+1)<>10 THEN M(I,J)=1 ELSE M(I,J)=3 'initial map has 1 in 20 chance of being a star
 260    NEXT J
 270   NEXT I
 280 PRINT Z1$

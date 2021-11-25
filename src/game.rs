@@ -1,4 +1,3 @@
-
 use crate::{Board, Player, Location};
 use dialoguer::Input;
 
