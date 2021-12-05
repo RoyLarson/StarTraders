@@ -1,9 +1,6 @@
 
 
 use std::collections::HashMap;
-use rand::prelude::*;
-use rand_pcg::Pcg64;
-
 use std::fmt;
 use crate::location::Location;
 
@@ -23,7 +20,7 @@ pub enum LocationOccupancy{
 }
 
 #[derive(Debug,Clone)]
-pub struct Moves(Vec<Location>);
+pub struct Moves(pub Vec<Location>);
 
 impl fmt::Display for Moves{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -54,43 +51,27 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new(seed: usize)->Board {
-        let mut rng= Pcg64::seed_from_u64(seed as u64);
+    pub fn new()->Board {
         let columns: Vec<char> = "ABCDEFGHIJKL".chars().collect();
         let rows: Vec<char> = "123456789".chars().collect();
         let mut spaces: HashMap<Location,LocationOccupancy> = HashMap::new();
 
         for l in &columns {
             for n in &rows{
-                let rand_num:f64 = rng.gen();
-                if rand_num<0.05{
-                    spaces.insert(Location{x:l.to_string(), y:l.to_string()}, LocationOccupancy::STAR);
-                } else {
-                    spaces.insert(Location{x:l.to_string(), y:n.to_string()}, LocationOccupancy::OPEN);
-                }
+                spaces.insert(Location{x:l.to_string(), y:n.to_string()}, LocationOccupancy::OPEN);
+
             }
         }
 
         Board{spaces, columns, rows}
 
     }
-    pub fn get_legal_moves(&self)->Moves {
-        let mut open_locations= Vec::<Location>::new();
-        for (location, occupation) in &self.spaces{
-            match occupation{
-                LocationOccupancy::OPEN=>{
-                    open_locations.push(location.clone());
-                }
-                _=>{}
-            }
-        }
-        let mut moves = Vec::<Location>::new();
-        for loc in open_locations.choose_multiple(&mut rand::thread_rng(), 6){
-            moves.push(loc.clone())
-        }
-        Moves(moves)
+
+    pub fn update_location(&mut self, location:Location, occupancy:LocationOccupancy){
+        self.spaces.entry(location).or_insert(occupancy);
     }
-    fn location_neighbors(&self, location:&Location)->Vec<Location>{
+
+    pub fn location_neighbors(&self, location:&Location)->Vec<Location>{
         let mut locations = Vec::<Location>::new();
         let x_ind = self.columns.iter().position(|&r| r.to_string() == location.x).unwrap();
         let y_ind = self.columns.iter().position(|&r| r.to_string() == location.y).unwrap();
@@ -105,9 +86,13 @@ impl Board {
         }
         locations
     }
+    pub fn get_spaces(&self) -> Vec<Location>{
+        let locations = self.spaces.keys().cloned().collect::<Vec<Location>>();
+        locations
+    }
 }
 
 #[test]
 fn test_board_creation(){
-    let _board = Board::new(42);
+    let _board = Board::new();
 }

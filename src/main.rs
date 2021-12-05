@@ -1,12 +1,7 @@
-mod instructions;
-
-use instructions::query_to_display_instructions;
-
-use startraders::{Player, Board, play_game};
 use dialoguer::Input;
 use rand::prelude::*;
 
-
+use startraders::{Player, Board, play_game, setup_board, query_to_display_instructions};
 
 fn main() {
     println!("              **********   STAR TRADERS   **********");
@@ -36,7 +31,7 @@ fn main() {
         .with_prompt("Input a game board number")
         .interact()
         .unwrap();
-    let game_board = Board::new(board_seed);
+    let mut game_board = setup_board(Board::new(), board_seed);
     play_game(game_board, players);
 
 }
