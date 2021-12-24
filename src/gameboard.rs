@@ -1,51 +1,8 @@
-use crate::location::Location;
+use crate::Location;
+use crate::LocationOccupancy;
 use std::collections::HashMap;
 use std::fmt;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum Company {
-    ALTAIR,
-    BETELGEUSE,
-    CAPELLA,
-    DENEBOLA,
-    ERIDANI,
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum LocationOccupancy {
-    OPEN,
-    PLAYED,
-    STAR,
-    COMPANY(Company),
-}
-
-#[derive(Debug, Clone)]
-pub struct Moves(pub Vec<Location>);
-
-impl fmt::Display for Moves {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut comma_separated = String::new();
-
-        for loc in &self.0[0..self.0.len() - 1] {
-            comma_separated.push_str(format!("{}", &loc).as_str());
-            comma_separated.push_str(", ");
-        }
-
-        comma_separated.push_str(format!("{}", &self.0[self.0.len() - 1]).as_str());
-        write!(f, "{}", comma_separated)
-    }
-}
-
-impl Moves {
-    pub fn contains(&self, loc: &Location) -> bool {
-        for move_loc in &self.0[0..self.0.len()] {
-            if move_loc == loc {
-                return true;
-            }
-        }
-        false
-    }
-}
 pub struct Board {
     pub spaces: HashMap<Location, LocationOccupancy>,
     columns: Vec<char>,
@@ -121,6 +78,15 @@ impl Board {
         }
     }
 }
+
+
+impl fmt::Display for Board {
+    fn fmt(&self, &mut fmt::Formatter) -> fmt::Result{
+
+    }
+    
+}
+
 
 #[test]
 fn test_board_creation() {

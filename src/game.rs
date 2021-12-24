@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use crate::{Board, Location, LocationOccupancy, Moves, Player};
 
-pub fn play_game(board: Board, players: Vec<Player>) {
+pub fn play_game(mut board: Board, players: Vec<Player>) {
     let mut players_turn: usize = 0;
     for _ in 0..48 {
         let current_player = &players[players_turn];
