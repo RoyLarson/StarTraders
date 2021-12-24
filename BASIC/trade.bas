@@ -10,12 +10,12 @@
 ' N$ player names
 ' D1 = TODO: figure out what
 ' S1 = Company stock values
-' Q = TODO: figure out what
+' Q = Number of spaces used by company 
 ' M$ = Map column names
 ' C$ = TODO: figure out what
-50 DIM C1$(25),C2$(25),B(5) 'B what not originally dimmed
-' C1$ = TODO: figure out what
-' C2$ = TODO: figure out what
+50 DIM C1$(25),C2$(25),B(5) 'B was not originally dimmed
+' C1$ = Used to display company names
+' C2$ = Used to display company names
 ' B = TODO: figure out what
 60 DATA 1,"'ALTAIR STARWAYS'"
 70 DATA 2,"'BETELGEUSE,LTD.'"
@@ -82,7 +82,7 @@
 660    NEXT I1
 670 IF M(R(I),C(I))>1 THEN 620 'If space occupied try again
 680    FOR I1=1 TO 5
-690 IF Q(I1)=0 THEN  870 'IF Q(I1) is 0 accept postion TODO: Q 
+690 IF Q(I1)=0 THEN  870 'If there are not any company spaces on the board then accept
 700    NEXT I1
 710 IF M(R(I),C(I)+1)>3 THEN 870 'If current location is next to company accept
 720 IF M(R(I),C(I)-1)>3 THEN 870
