@@ -1,23 +1,22 @@
 use dialoguer::Input;
 use rand::prelude::*;
 
-use startraders::{Player, Board, play_game, setup_board, query_to_display_instructions};
+use startraders::{play_game, query_to_display_instructions, setup_board, Board, Player};
 
 fn main() {
     println!("              **********   STAR TRADERS   **********");
     query_to_display_instructions();
 
-    let mut players:Vec<Player> = Vec::new();
-    let num_players:u32 = Input::new()
+    let mut players: Vec<Player> = Vec::new();
+    let num_players: u32 = Input::new()
         .with_prompt("How many players are playing:")
         .default(1)
         .interact()
         .unwrap();
 
-
-    for i in 0..num_players{
+    for i in 0..num_players {
         let name = Input::<String>::new()
-            .with_prompt(format!("What is player {}'s name",i+1))
+            .with_prompt(format!("What is player {}'s name", i + 1))
             .interact()
             .unwrap();
         let player = Player::new(name);
@@ -31,7 +30,9 @@ fn main() {
         .with_prompt("Input a game board number")
         .interact()
         .unwrap();
-    let mut game_board = setup_board(Board::new(), board_seed);
-    play_game(game_board, players);
 
+    let mut game_board = Board::new();
+    setup_board(&mut game_board, board_seed);
+    println!("{}", game_board);
+    play_game(game_board, players);
 }

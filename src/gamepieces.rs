@@ -35,7 +35,7 @@ impl fmt::Display for LocationOccupancy {
         match &self {
             Self::OPEN => write!(f, "."),
             Self::PLAYED => write!(f, "+"),
-            Self::STAR => write!(f, "🌟"),
+            Self::STAR => write!(f, "*"),
             Self::COMPANY(ref company) => fmt::Display::fmt(company, f),
         }
     }

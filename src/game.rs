@@ -28,17 +28,16 @@ pub fn play_game(mut board: Board, players: Vec<Player>) {
     }
 }
 
-pub fn setup_board(mut board: Board, seed: usize) -> Board {
+pub fn setup_board(board: &mut Board, seed: usize) {
     let mut rng = Pcg64::seed_from_u64(seed as u64);
 
     let locations = board.get_spaces();
     for location in locations.iter() {
         let rand_num: f64 = rng.gen();
         if rand_num < 0.05 {
-            board.update_location(location.to_owned(), LocationOccupancy::STAR);
+            board.update_location(location.clone(), LocationOccupancy::STAR);
         }
     }
-    board
 }
 
 pub fn get_legal_moves(board: &Board) -> Moves {

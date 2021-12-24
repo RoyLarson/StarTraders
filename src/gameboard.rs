@@ -35,7 +35,7 @@ impl Board {
     }
 
     pub fn update_location(&mut self, location: Location, occupancy: LocationOccupancy) {
-        self.spaces.entry(location).or_insert(occupancy);
+        self.spaces.insert(location, occupancy);
     }
 
     pub fn location_neighbors(&self, location: &Location) -> Vec<Location> {
@@ -79,14 +79,33 @@ impl Board {
     }
 }
 
-
 impl fmt::Display for Board {
-    fn fmt(&self, &mut fmt::Formatter) -> fmt::Result{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let space = "   ";
+        let mut grid = String::from("    ");
+        for c in &self.columns {
+            grid.push(c.clone());
+            grid.push_str(space.clone());
+        }
+        grid.push_str("\n");
 
+        for r in &self.rows {
+            let mut row = String::from(r.to_string());
+
+            for c in &self.columns {
+                row.push_str(space);
+                let loc = Location {
+                    x: c.clone().to_string(),
+                    y: r.clone().to_string(),
+                };
+                row.push_str(format!("{}", self.spaces.get(&loc).unwrap()).as_str());
+            }
+            row.push_str("\n");
+            grid.push_str(row.as_str());
+        }
+        write!(f, "{}", grid)
     }
-    
 }
-
 
 #[test]
 fn test_board_creation() {
