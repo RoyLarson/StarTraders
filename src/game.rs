@@ -8,6 +8,7 @@ use crate::{Board, Location, LocationOccupancy, Moves, Player};
 pub fn play_game(mut board: Board, players: Vec<Player>) {
     let mut players_turn: usize = 0;
     for _ in 0..48 {
+        print!("{}", &board);
         let current_player = &players[players_turn];
         let legal_moves = get_legal_moves(&board);
         println!("The moves are: {}", legal_moves);
@@ -22,6 +23,7 @@ pub fn play_game(mut board: Board, players: Vec<Player>) {
             })
             .interact()
             .unwrap();
+        play_move(&mut board, &location);
 
         players_turn += 1;
         players_turn %= players.len();
@@ -105,4 +107,29 @@ pub fn legal_move(board: &Board, location: &Location) -> bool {
     }
 
     true
+}
+
+pub fn play_move(board: &mut Board, location: &Location) {
+    let neighbors = board.location_neighbors(location);
+
+    let is_next_to_company = neighbors
+        .iter()
+        .map(|loc| board.space(loc.clone()).unwrap())
+        .any(|occ| matches!(occ, LocationOccupancy::COMPANY(_)));
+
+    let is_next_to_star = neighbors
+        .iter()
+        .map(|loc| board.space(loc.clone()).unwrap())
+        .any(|occ| matches!(occ, LocationOccupancy::STAR));
+
+    let is_next_to_played = neighbors
+        .iter()
+        .map(|loc| board.space(loc.clone()).unwrap())
+        .any(|occ| matches!(occ, LocationOccupancy::PLAYED));
+
+    match (is_next_to_company, is_next_to_star, is_next_to_played) {
+        (false, false, false) => board.update_location(location.clone(), LocationOccupancy::PLAYED), // implements line 1230
+        (false, false, true) => panic!(),
+        _ => panic!(),
+    }
 }
