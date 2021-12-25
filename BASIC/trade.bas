@@ -138,15 +138,19 @@
 1200 A2=M(R+1,C)
 1210 A3=M(R,C+1)
 1220 A4=M(R,C-1)
+' If all neighboring spaces are unplayed then mark as played
 1230 IF A1<=1 AND A2<=1 AND A3<=1 AND A4<=1 THEN M(R,C)=2 ELSE 1250
 1240 GOTO 1760
+' Check if the space played will cause touching different companies
+' if it does then merge the two companies
 1250 IF A1>3 AND A2>3 AND A2<>A1 THEN GOSUB 2220:REM - LINE 2220 IS
 1260 IF A1>3 AND A3>3 AND A3<>A1 THEN GOSUB 2220:REM   THE MERGER SUB
 1270 IF A1>3 AND A4>3 AND A4<>A1 THEN GOSUB 2220
 1280 IF A2>3 AND A3>3 AND A3<>A2 THEN GOSUB 2220
 1290 IF A2>3 AND A4>3 AND A4<>A2 THEN GOSUB 2220
 1300 IF A3>3 AND A4>3 AND A4<>A3 THEN GOSUB 2220
-1310 IF A1<4 AND A2<4 AND A3<4 AND A4<4 THEN 1410
+' At least one space has to be either a played but not company or a star
+1310 IF A1<4 AND A2<4 AND A3<4 AND A4<4 THEN 1410 
 1320 IF M(R,C)>3 THEN 1760
 1330 IF A1>3 THEN I=A1-3
 1340 IF A2>3 THEN I=A2-3
