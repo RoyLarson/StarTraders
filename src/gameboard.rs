@@ -39,36 +39,48 @@ impl Board {
     }
 
     pub fn location_neighbors(&self, location: &Location) -> Vec<Location> {
-        let mut locations = Vec::<Location>::new();
+        assert!(self.spaces.contains_key(location));
         let x_ind = self
             .columns
             .iter()
             .position(|&r| r.to_string() == location.x)
             .unwrap();
         let y_ind = self
-            .columns
+            .rows
             .iter()
             .position(|&r| r.to_string() == location.y)
             .unwrap();
         let positions = vec![
-            (x_ind - 1, y_ind),
-            (x_ind + 1, y_ind),
-            (x_ind, y_ind - 1),
-            (x_ind, y_ind + 1),
+            (x_ind as i64 - 1, y_ind as i64),
+            (x_ind as i64 + 1, y_ind as i64),
+            (x_ind as i64, y_ind as i64 - 1),
+            (x_ind as i64, y_ind as i64 + 1),
         ];
+        let num_cols = self.columns.len() as i64;
+        let num_rows = self.rows.len() as i64;
+
+        let mut locations = Vec::<Location>::new();
+        // Need to assert this as if I change the board size then
+        // the following match function needs to change
+
         for pos in positions {
             match pos {
-                (0..=12, 0..=9) => locations.push(Location {
-                    x: self.columns[pos.0].to_string(),
-                    y: self.rows[pos.1].to_string(),
-                }),
+                (x, y) if (x >= 0 && x < num_cols) && (y >= 0 && y < num_rows) => {
+                    locations.push(Location {
+                        x: self.columns[pos.0 as usize].to_string(),
+                        y: self.rows[pos.1 as usize].to_string(),
+                    })
+                }
                 _ => {}
             }
         }
         locations
     }
     pub fn get_spaces(&self) -> Vec<Location> {
-        let locations = self.spaces.keys().cloned().collect::<Vec<Location>>();
+        let mut locations = self.spaces.keys().cloned().collect::<Vec<Location>>();
+
+        locations.sort();
+
         locations
     }
     pub fn space(&self, loc: Location) -> Option<LocationOccupancy> {
@@ -110,4 +122,96 @@ impl fmt::Display for Board {
 #[test]
 fn test_board_creation() {
     let _board = Board::new();
+}
+
+#[test]
+fn test_get_neighbors_upper_left_corner() {
+    let board = Board::new();
+    let loc = Location {
+        x: board.columns[0].to_string(),
+        y: board.rows[0].to_string(),
+    };
+
+    let answer = vec![
+        Location {
+            x: "B".to_string(),
+            y: "1".to_string(),
+        },
+        Location {
+            x: "A".to_string(),
+            y: "2".to_string(),
+        },
+    ];
+    let result = board.location_neighbors(&loc);
+
+    assert_eq!(result, answer)
+}
+
+#[test]
+fn test_get_neighbors_upper_right_corner() {
+    let board = Board::new();
+    let loc = Location {
+        x: board.columns[board.columns.len() - 1].to_string(),
+        y: board.rows[0].to_string(),
+    };
+
+    let answer = vec![
+        Location {
+            x: "K".to_string(),
+            y: "1".to_string(),
+        },
+        Location {
+            x: "L".to_string(),
+            y: "2".to_string(),
+        },
+    ];
+    let result = board.location_neighbors(&loc);
+
+    assert_eq!(result, answer)
+}
+
+#[test]
+fn test_get_neighbors_lower_left_corner() {
+    let board = Board::new();
+    let loc = Location {
+        x: board.columns[0].to_string(),
+        y: board.rows[board.rows.len() - 1].to_string(),
+    };
+
+    let answer = vec![
+        Location {
+            x: board.columns[1].to_string(),
+            y: board.rows[board.rows.len() - 1].to_string(),
+        },
+        Location {
+            x: board.columns[0].to_string(),
+            y: board.rows[board.rows.len() - 2].to_string(),
+        },
+    ];
+    let result = board.location_neighbors(&loc);
+
+    assert_eq!(result, answer)
+}
+
+#[test]
+fn test_get_neighbors_lower_right_corner() {
+    let board = Board::new();
+    let loc = Location {
+        x: board.columns[board.columns.len() - 1].to_string(),
+        y: board.rows[board.rows.len() - 1].to_string(),
+    };
+
+    let answer = vec![
+        Location {
+            x: board.columns[board.columns.len() - 2].to_string(),
+            y: board.rows[board.rows.len() - 1].to_string(),
+        },
+        Location {
+            x: board.columns[board.columns.len() - 1].to_string(),
+            y: board.rows[board.rows.len() - 2].to_string(),
+        },
+    ];
+    let result = board.location_neighbors(&loc);
+
+    assert_eq!(result, answer)
 }
