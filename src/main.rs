@@ -33,6 +33,5 @@ fn main() {
 
     let mut game_board = Board::new();
     setup_board(&mut game_board, board_seed);
-    println!("{}", game_board);
     play_game(game_board, players);
 }
