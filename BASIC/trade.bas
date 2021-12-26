@@ -16,13 +16,13 @@
 50 DIM C1$(25),C2$(25),B(5) 'B was not originally dimmed
 ' C1$ = Used to display company names
 ' C2$ = Used to display company names
-' B = TODO: figure out what
+' B = Player Account balances
 60 DATA 1,"'ALTAIR STARWAYS'"
 70 DATA 2,"'BETELGEUSE,LTD.'"
 80 DATA 3,"'CAPELLA FREIGHT CO.'"
 90 DATA 4,"'DENEBOLA SHIPPERS'"
 100 DATA 5,"'ERIDANI EXPEDITERS'"
-110 Z1$=CHR$(26)+CHR$(0)
+110 Z1$=CHR$(26)+CHR$(0) ' Substitution + Null
 120 PRINT Z1$
 130   FOR I=1 TO 5
 140    FOR J=1 TO 4
