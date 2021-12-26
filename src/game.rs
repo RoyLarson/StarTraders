@@ -142,31 +142,23 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
             board.update_location(location.clone(), LocationOccupancy::PLAYED); // implements line 1230
             return PlayResult::Normal;
         }
-        (false, false, true) => return create_and_set_company(board, location, neighbors),
+        (false, false, true) => match create_company(board) {
+            Some(company) => {
+                let occ = LocationOccupancy::COMPANY(company);
+                update_all_joined_locations(board, location, LocationOccupancy::PLAYED, occ);
+                return PlayResult::NewCompany(company);
+            }
+            None => return PlayResult::Normal,
+        },
         _ => panic!(),
     }
-}
-
-pub fn create_and_set_company(board: &mut Board, location: &Location) -> PlayResult {
-    board.update_location(location.clone(), LocationOccupancy::PLAYED);
-
-    match first_open_company(board) {
-        Some(company) => {
-            let occ = LocationOccupancy::COMPANY(company.clone());
-            update_all_joined_locations(board, location, LocationOccupancy::PLAYED, &occ);
-            return PlayResult::NewCompany(company.clone());
-        }
-        None => {}
-    }
-
-    PlayResult::Normal
 }
 
 fn update_all_joined_locations(
     board: &mut Board,
     location: &Location,
     to_update: LocationOccupancy,
-    new_occ: &LocationOccupancy,
+    new_occ: LocationOccupancy,
 ) {
     let mut to_visit: VecDeque<Location> = VecDeque::new();
     to_visit.push_front(location.clone());
@@ -181,7 +173,8 @@ fn update_all_joined_locations(
                 .location_neighbors(&loc)
                 .iter()
                 .filter(|loc| {
-                    matches!(board.spaces.get(loc).unwrap(), to_update,) && !visited.contains(&loc)
+                    (board.spaces.get(loc).unwrap().clone() == to_update)
+                        && !visited.contains(loc.clone())
                 })
                 .cloned()
                 .collect::<VecDeque<Location>>(),
@@ -190,7 +183,7 @@ fn update_all_joined_locations(
     }
 }
 
-fn first_open_company(board: &Board) -> Option<Company> {
+fn create_company(board: &Board) -> Option<Company> {
     let company_occ = [
         LocationOccupancy::COMPANY(Company::ALTAIR),
         LocationOccupancy::COMPANY(Company::BETELGEUSE),
@@ -208,11 +201,11 @@ fn first_open_company(board: &Board) -> Option<Company> {
         .into_iter()
         .collect();
 
-    for comp in company_occ {
-        if !used_companies.contains(&comp) {
-            match comp {
+    for occ in company_occ {
+        if !used_companies.contains(&occ) {
+            match occ {
                 LocationOccupancy::COMPANY(name) => return Some(name),
-                _ => panic!(format!("LocationOccupancy not correct: {:?}", comp)),
+                _ => panic!("LocationOccupancy not of COMPANY: {:?}", occ),
             }
         }
     }
