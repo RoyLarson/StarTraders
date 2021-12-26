@@ -10,6 +10,18 @@ pub enum Company {
     ERIDANI,
 }
 
+impl Company {
+    fn name(&self) -> String {
+        match &self {
+            Self::ALTAIR => "ALTAIR STARWAYS".to_string(),
+            Self::BETELGEUSE => "BETELGEUSE,LTD.".to_string(),
+            Self::CAPELLA => "CAPELLA FREIGHT CO.".to_string(),
+            Self::DENEBOLA => "DENEBOLA SHIPPERS".to_string(),
+            Self::ERIDANI => "ERIDANI EXPEDITERS".to_string(),
+        }
+    }
+}
+
 impl fmt::Display for Company {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
