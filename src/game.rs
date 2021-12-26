@@ -1,9 +1,19 @@
 use dialoguer::Input;
 use rand::prelude::*;
 use rand_pcg::Pcg64;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 
-use crate::{Board, Location, LocationOccupancy, Moves, Player};
+use crate::{Board, Company, Location, LocationOccupancy, Moves, Player};
+
+struct Merge {
+    from: Company,
+    to: Company,
+}
+pub enum PlayResult {
+    Normal,
+    NewCompany(Company),
+    Merger(Merge),
+}
 
 pub fn play_game(mut board: Board, players: Vec<Player>) {
     let mut players_turn: usize = 0;
@@ -109,7 +119,7 @@ pub fn legal_move(board: &Board, location: &Location) -> bool {
     true
 }
 
-pub fn play_move(board: &mut Board, location: &Location) {
+pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
     let neighbors = board.location_neighbors(location);
 
     let is_next_to_company = neighbors
@@ -128,8 +138,83 @@ pub fn play_move(board: &mut Board, location: &Location) {
         .any(|occ| matches!(occ, LocationOccupancy::PLAYED));
 
     match (is_next_to_company, is_next_to_star, is_next_to_played) {
-        (false, false, false) => board.update_location(location.clone(), LocationOccupancy::PLAYED), // implements line 1230
-        (false, false, true) => panic!(),
+        (false, false, false) => {
+            board.update_location(location.clone(), LocationOccupancy::PLAYED); // implements line 1230
+            return PlayResult::Normal;
+        }
+        (false, false, true) => return create_and_set_company(board, location, neighbors),
         _ => panic!(),
     }
+}
+
+pub fn create_and_set_company(board: &mut Board, location: &Location) -> PlayResult {
+    board.update_location(location.clone(), LocationOccupancy::PLAYED);
+
+    match first_open_company(board) {
+        Some(company) => {
+            let occ = LocationOccupancy::COMPANY(company.clone());
+            update_all_joined_locations(board, location, LocationOccupancy::PLAYED, &occ);
+            return PlayResult::NewCompany(company.clone());
+        }
+        None => {}
+    }
+
+    PlayResult::Normal
+}
+
+fn update_all_joined_locations(
+    board: &mut Board,
+    location: &Location,
+    to_update: LocationOccupancy,
+    new_occ: &LocationOccupancy,
+) {
+    let mut to_visit: VecDeque<Location> = VecDeque::new();
+    to_visit.push_front(location.clone());
+
+    let mut visited = HashSet::new();
+
+    while to_visit.len() > 0 {
+        let loc = to_visit.pop_front().unwrap();
+        visited.insert(loc.clone());
+        to_visit.extend(
+            board
+                .location_neighbors(&loc)
+                .iter()
+                .filter(|loc| {
+                    matches!(board.spaces.get(loc).unwrap(), to_update,) && !visited.contains(&loc)
+                })
+                .cloned()
+                .collect::<VecDeque<Location>>(),
+        );
+        board.update_location(loc, new_occ.clone());
+    }
+}
+
+fn first_open_company(board: &Board) -> Option<Company> {
+    let company_occ = [
+        LocationOccupancy::COMPANY(Company::ALTAIR),
+        LocationOccupancy::COMPANY(Company::BETELGEUSE),
+        LocationOccupancy::COMPANY(Company::CAPELLA),
+        LocationOccupancy::COMPANY(Company::DENEBOLA),
+        LocationOccupancy::COMPANY(Company::ERIDANI),
+    ];
+
+    let used_companies: HashSet<LocationOccupancy> = board
+        .spaces
+        .values()
+        .filter(|occ| matches!(*occ, LocationOccupancy::COMPANY(_)))
+        .cloned()
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    for comp in company_occ {
+        if !used_companies.contains(&comp) {
+            match comp {
+                LocationOccupancy::COMPANY(name) => return Some(name),
+                _ => panic!(format!("LocationOccupancy not correct: {:?}", comp)),
+            }
+        }
+    }
+    None
 }
