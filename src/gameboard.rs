@@ -40,22 +40,26 @@ impl Board {
 
     pub fn location_neighbors(&self, location: &Location) -> Vec<Location> {
         assert!(self.spaces.contains_key(location));
+
         let x_ind = self
             .columns
             .iter()
             .position(|&r| r.to_string() == location.x)
             .unwrap();
+
         let y_ind = self
             .rows
             .iter()
             .position(|&r| r.to_string() == location.y)
             .unwrap();
+
         let positions = vec![
             (x_ind as i64 - 1, y_ind as i64),
             (x_ind as i64 + 1, y_ind as i64),
             (x_ind as i64, y_ind as i64 - 1),
             (x_ind as i64, y_ind as i64 + 1),
         ];
+
         let num_cols = self.columns.len() as i64;
         let num_rows = self.rows.len() as i64;
 
@@ -76,6 +80,7 @@ impl Board {
         }
         locations
     }
+
     pub fn get_spaces(&self) -> Vec<Location> {
         let mut locations = self.spaces.keys().cloned().collect::<Vec<Location>>();
 
@@ -83,18 +88,19 @@ impl Board {
 
         locations
     }
-    pub fn space(&self, loc: Location) -> Option<LocationOccupancy> {
-        match self.spaces.get(&loc) {
-            Some(occ) => return Some(*occ),
-            None => return None,
+
+    pub fn space(&self, loc: &Location) -> Option<LocationOccupancy> {
+        match self.spaces.get(loc) {
+            Some(occ) => Some(occ.clone()),
+            None => None,
         }
     }
 }
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let space = "   ";
-        let mut grid = String::from("    ");
+        let space = "  ";
+        let mut grid = String::from(space);
         for c in &self.columns {
             grid.push(c.clone());
             grid.push_str(space.clone());

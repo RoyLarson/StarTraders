@@ -2,7 +2,7 @@ use crate::Location;
 use std::fmt;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum Company {
+pub enum CompanyID {
     ALTAIR,
     BETELGEUSE,
     CAPELLA,
@@ -10,8 +10,8 @@ pub enum Company {
     ERIDANI,
 }
 
-impl Company {
-    fn name(&self) -> String {
+impl CompanyID {
+    pub fn name(&self) -> String {
         match &self {
             Self::ALTAIR => "ALTAIR STARWAYS".to_string(),
             Self::BETELGEUSE => "BETELGEUSE,LTD.".to_string(),
@@ -22,7 +22,7 @@ impl Company {
     }
 }
 
-impl fmt::Display for Company {
+impl fmt::Display for CompanyID {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
             Self::ALTAIR => write!(f, "A"),
@@ -39,7 +39,7 @@ pub enum LocationOccupancy {
     OPEN,
     PLAYED,
     STAR,
-    COMPANY(Company),
+    COMPANYID(CompanyID),
 }
 
 impl fmt::Display for LocationOccupancy {
@@ -48,7 +48,7 @@ impl fmt::Display for LocationOccupancy {
             Self::OPEN => write!(f, "."),
             Self::PLAYED => write!(f, "+"),
             Self::STAR => write!(f, "*"),
-            Self::COMPANY(ref company) => fmt::Display::fmt(company, f),
+            Self::COMPANYID(ref company_id) => fmt::Display::fmt(company_id, f),
         }
     }
 }
