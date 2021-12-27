@@ -1,17 +1,17 @@
 use dialoguer::Input;
 use rand::prelude::*;
 use rand_pcg::Pcg64;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque};
 
-use crate::{Board, Company, Location, LocationOccupancy, Moves, Player};
+use crate::{Board, CompanyID, Location, LocationOccupancy, Moves, Player};
 
 pub struct Merge {
-    from: Company,
-    to: Company,
+    from: CompanyID,
+    to: CompanyID,
 }
 pub enum PlayResult {
     Normal,
-    NewCompany(Company),
+    NewCompany(CompanyID),
     Merger(Merge),
 }
 
@@ -33,7 +33,28 @@ pub fn play_game(mut board: Board, players: Vec<Player>) {
             })
             .interact()
             .unwrap();
-        play_move(&mut board, &location);
+        let result = play_move(&mut board, &location);
+
+        match result {
+            PlayResult::Normal => {
+                match board
+                    .spaces
+                    .values()
+                    .filter(|occ| matches!(*occ, &LocationOccupancy::COMPANYID(_)))
+                    .count()
+                {
+                    0 => {}
+                    _ => {}
+                }
+            }
+            PlayResult::NewCompany(company) => {
+                println!("             SPECIAL ANNOUNCEMENT !!!");
+                println!("");
+                println!("A NEW COMPANY HAS BEN FORMED: {}", company.name());
+                println!("");
+            }
+            PlayResult::Merger(merge) => {}
+        }
 
         players_turn += 1;
         players_turn %= players.len();
@@ -127,17 +148,17 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
 
     let is_next_to_company = neighbors
         .iter()
-        .map(|loc| board.space(loc.clone()).unwrap())
-        .any(|occ| matches!(occ, LocationOccupancy::COMPANY(_)));
+        .map(|loc| board.spaces.get(loc).unwrap())
+        .any(|occ| matches!(occ, LocationOccupancy::COMPANYID(_)));
 
     let is_next_to_star = neighbors
         .iter()
-        .map(|loc| board.space(loc.clone()).unwrap())
+        .map(|loc| board.space(loc).unwrap())
         .any(|occ| matches!(occ, LocationOccupancy::STAR));
 
     let is_next_to_played = neighbors
         .iter()
-        .map(|loc| board.space(loc.clone()).unwrap())
+        .map(|loc| board.space(loc).unwrap())
         .any(|occ| matches!(occ, LocationOccupancy::PLAYED));
 
     match (is_next_to_company, is_next_to_star, is_next_to_played) {
@@ -146,7 +167,7 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
         }
         (false, _, true) => match create_company(board) {
             Some(company) => {
-                let occ = LocationOccupancy::COMPANY(company);
+                let occ = LocationOccupancy::COMPANYID(company);
                 update_all_joined_locations(board, location, LocationOccupancy::PLAYED, occ);
                 return PlayResult::NewCompany(company);
             }
@@ -154,7 +175,7 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
         },
         (false, true, _) => match create_company(board) {
             Some(company) => {
-                let occ = LocationOccupancy::COMPANY(company);
+                let occ = LocationOccupancy::COMPANYID(company);
                 update_all_joined_locations(board, location, LocationOccupancy::PLAYED, occ);
                 return PlayResult::NewCompany(company);
             }
@@ -165,12 +186,12 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                 panic!("No companies returned from requires_merger")
             }
             companies if companies.len() == 1 => {
-                let company = companies.iter().cloned().collect::<Vec<Company>>()[0];
+                let company = companies.iter().cloned().collect::<Vec<CompanyID>>()[0];
                 update_all_joined_locations(
                     board,
                     location,
                     LocationOccupancy::PLAYED,
-                    LocationOccupancy::COMPANY(company),
+                    LocationOccupancy::COMPANYID(company),
                 );
             }
             mut companies if companies.len() == 2 => {
@@ -182,13 +203,13 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                 let a_size = board
                     .spaces
                     .values()
-                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANY(company_a)))
+                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(company_a)))
                     .count();
 
                 let b_size = board
                     .spaces
                     .values()
-                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANY(company_b)))
+                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(company_b)))
                     .count();
 
                 let mut merge = Merge {
@@ -205,7 +226,7 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
 
                 board.update_location(
                     location.clone(),
-                    LocationOccupancy::COMPANY(merge.to.clone()),
+                    LocationOccupancy::COMPANYID(merge.to.clone()),
                 );
                 return PlayResult::Merger(merge);
             }
@@ -237,8 +258,7 @@ fn update_all_joined_locations(
                 .location_neighbors(&loc)
                 .iter()
                 .filter(|loc| {
-                    (board.spaces.get(loc).unwrap().clone() == to_update)
-                        && !visited.contains(loc.clone())
+                    (board.spaces.get(*loc).unwrap().clone() == to_update) && !visited.contains(loc)
                 })
                 .cloned()
                 .collect::<VecDeque<Location>>(),
@@ -247,26 +267,26 @@ fn update_all_joined_locations(
     }
 }
 
-fn create_company(board: &Board) -> Option<Company> {
+fn create_company(board: &Board) -> Option<CompanyID> {
     let company_occ = [
-        LocationOccupancy::COMPANY(Company::ALTAIR),
-        LocationOccupancy::COMPANY(Company::BETELGEUSE),
-        LocationOccupancy::COMPANY(Company::CAPELLA),
-        LocationOccupancy::COMPANY(Company::DENEBOLA),
-        LocationOccupancy::COMPANY(Company::ERIDANI),
+        LocationOccupancy::COMPANYID(CompanyID::ALTAIR),
+        LocationOccupancy::COMPANYID(CompanyID::BETELGEUSE),
+        LocationOccupancy::COMPANYID(CompanyID::CAPELLA),
+        LocationOccupancy::COMPANYID(CompanyID::DENEBOLA),
+        LocationOccupancy::COMPANYID(CompanyID::ERIDANI),
     ];
 
     let used_companies: HashSet<LocationOccupancy> = board
         .spaces
         .values()
-        .filter(|occ| matches!(*occ, LocationOccupancy::COMPANY(_)))
+        .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(_)))
         .cloned()
         .collect::<HashSet<_>>();
 
     for occ in company_occ {
         if !used_companies.contains(&occ) {
             match occ {
-                LocationOccupancy::COMPANY(name) => return Some(name),
+                LocationOccupancy::COMPANYID(name) => return Some(name),
                 _ => panic!("LocationOccupancy not of COMPANY: {:?}", occ),
             }
         }
@@ -274,18 +294,18 @@ fn create_company(board: &Board) -> Option<Company> {
     None
 }
 
-fn requires_merger(board: &Board, location: &Location) -> HashSet<Company> {
+fn requires_merger(board: &Board, location: &Location) -> HashSet<CompanyID> {
     let neighbor_companies = board
         .location_neighbors(location)
         .iter()
         .filter(|loc| {
             matches!(
                 board.spaces.get(*loc).unwrap(),
-                LocationOccupancy::COMPANY(_)
+                LocationOccupancy::COMPANYID(_)
             )
         })
         .map(|loc| match board.spaces.get(loc).unwrap() {
-            &LocationOccupancy::COMPANY(company) => company,
+            &LocationOccupancy::COMPANYID(company) => company,
             _ => panic!("WTF the filter in requires_merger didn't work"),
         })
         .collect::<Vec<_>>()
