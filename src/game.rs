@@ -11,7 +11,7 @@ pub struct Merge {
 }
 
 pub struct AddSpaces {
-    company: CompanyID,
+    company_id: CompanyID,
     open: u32,
     stars: u32,
 }
@@ -57,20 +57,21 @@ pub fn play_game(mut board: Board, players: Players) {
             }
             PlayResult::AddSpaces(add) => {
                 companies
-                    .get_mut(&add.company)
+                    .get_mut(&add.company_id)
                     .unwrap()
                     .update_stock_price(add.open, add.stars);
             }
             PlayResult::NewCompany(add) => {
                 println!("             SPECIAL ANNOUNCEMENT !!!");
                 println!();
-                println!("A NEW COMPANY HAS BEN FORMED: {}", add.company.name());
+                println!("A NEW COMPANY HAS BEN FORMED: {}", add.company_id.name());
                 println!();
-                companies.insert(add.company.clone(), Company::new(add.company.clone()));
+                companies.insert(add.company_id.clone(), Company::new(add.company_id.clone()));
                 companies
-                    .get_mut(&add.company)
+                    .get_mut(&add.company_id)
                     .unwrap()
                     .update_stock_price(add.open, add.stars);
+                println!("{}", companies.get(&add.company_id).unwrap())
             }
             PlayResult::Merger(merge) => {}
         }
@@ -187,7 +188,7 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                 let (open, stars) =
                     update_all_joined_locations(board, location, LocationOccupancy::PLAYED, occ);
                 return PlayResult::NewCompany(AddSpaces {
-                    company,
+                    company_id: company,
                     open,
                     stars,
                 });
@@ -199,7 +200,7 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                 let (open, stars) =
                     update_all_joined_locations(board, location, LocationOccupancy::PLAYED, occ);
                 return PlayResult::NewCompany(AddSpaces {
-                    company,
+                    company_id: company,
                     open,
                     stars,
                 });
@@ -219,7 +220,7 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                     LocationOccupancy::COMPANYID(company),
                 );
                 return PlayResult::AddSpaces(AddSpaces {
-                    company,
+                    company_id: company,
                     open,
                     stars,
                 });

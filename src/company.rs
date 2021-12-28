@@ -54,3 +54,14 @@ impl Company {
         self.stock_price > 3000
     }
 }
+
+impl fmt::Display for Company {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Company: {}\nStock Value: {}",
+            self.name.name(),
+            self.stock_price
+        )
+    }
+}
