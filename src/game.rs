@@ -3,7 +3,7 @@ use rand::prelude::*;
 use rand_pcg::Pcg64;
 use std::collections::{HashSet, VecDeque};
 
-use crate::{Board, CompanyID, Location, LocationOccupancy, Moves, Player};
+use crate::{Board, CompanyID, Location, LocationOccupancy, Moves, Players};
 
 pub struct Merge {
     from: CompanyID,
@@ -15,7 +15,7 @@ pub enum PlayResult {
     Merger(Merge),
 }
 
-pub fn play_game(mut board: Board, players: Vec<Player>) {
+pub fn play_game(mut board: Board, players: Players) {
     let mut players_turn: usize = 0;
 
     for _ in 0..48 {
@@ -38,15 +38,13 @@ pub fn play_game(mut board: Board, players: Vec<Player>) {
 
         match result {
             PlayResult::Normal => {
-                match board
+                if board
                     .spaces
                     .values()
                     .filter(|occ| matches!(*occ, &LocationOccupancy::COMPANYID(_)))
                     .count()
-                {
-                    0 => {}
-                    _ => {}
-                }
+                    > 0
+                {}
             }
             PlayResult::NewCompany(company) => {
                 println!("             SPECIAL ANNOUNCEMENT !!!");
@@ -78,7 +76,7 @@ pub fn get_legal_moves(board: &Board) -> Moves {
     let open_locations: Vec<Location> = board
         .spaces
         .keys()
-        .filter(|loc| legal_move(&board, loc))
+        .filter(|loc| legal_move(board, loc))
         .choose_multiple(&mut rand::thread_rng(), 6)
         .into_iter()
         .cloned()
@@ -88,7 +86,7 @@ pub fn get_legal_moves(board: &Board) -> Moves {
 }
 
 pub fn legal_move(board: &Board, location: &Location) -> bool {
-    let occupancy = board.spaces.get(&location).unwrap().clone();
+    let occupancy = *board.spaces.get(location).unwrap();
 
     if occupancy != LocationOccupancy::OPEN {
         // implements line 670 in trade.bas
@@ -166,14 +164,13 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
         (false, false, false) => {
             board.update_location(location.clone(), LocationOccupancy::PLAYED); // implements line 1230
         }
-        (false, _, true) => match create_company(board) {
-            Some(company) => {
+        (false, _, true) => {
+            if let Some(company) = create_company(board) {
                 let occ = LocationOccupancy::COMPANYID(company);
                 update_all_joined_locations(board, location, LocationOccupancy::PLAYED, occ);
                 return PlayResult::NewCompany(company);
             }
-            None => {}
-        },
+        }
         (false, true, _) => match create_company(board) {
             Some(company) => {
                 let occ = LocationOccupancy::COMPANYID(company);
@@ -183,7 +180,7 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
             None => board.update_location(location.clone(), LocationOccupancy::PLAYED),
         },
         (true, _, _) => match requires_merger(board, location) {
-            companies if companies.len() == 0 => {
+            companies if companies.is_empty() => {
                 panic!("No companies returned from requires_merger")
             }
             companies if companies.len() == 1 => {
@@ -196,9 +193,9 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                 );
             }
             mut companies if companies.len() == 2 => {
-                let company_a = companies.iter().next().unwrap().clone();
+                let company_a = *companies.iter().next().unwrap();
                 companies.remove(&company_a);
-                let company_b = companies.iter().next().unwrap().clone();
+                let company_b = *companies.iter().next().unwrap();
                 companies.remove(&company_b);
 
                 let a_size = board
@@ -225,10 +222,7 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                     };
                 }
 
-                board.update_location(
-                    location.clone(),
-                    LocationOccupancy::COMPANYID(merge.to.clone()),
-                );
+                board.update_location(location.clone(), LocationOccupancy::COMPANYID(merge.to));
                 return PlayResult::Merger(merge);
             }
             companies => panic!(
@@ -251,7 +245,7 @@ fn update_all_joined_locations(
 
     let mut visited = HashSet::new();
 
-    while to_visit.len() > 0 {
+    while !to_visit.is_empty() {
         let loc = to_visit.pop_front().unwrap();
         visited.insert(loc.clone());
         to_visit.extend(
@@ -259,12 +253,12 @@ fn update_all_joined_locations(
                 .location_neighbors(&loc)
                 .iter()
                 .filter(|loc| {
-                    (board.spaces.get(*loc).unwrap().clone() == to_update) && !visited.contains(loc)
+                    (*board.spaces.get(*loc).unwrap() == to_update) && !visited.contains(loc)
                 })
                 .cloned()
                 .collect::<VecDeque<Location>>(),
         );
-        board.update_location(loc, new_occ.clone());
+        board.update_location(loc, new_occ);
     }
 }
 
@@ -305,8 +299,8 @@ fn requires_merger(board: &Board, location: &Location) -> HashSet<CompanyID> {
                 LocationOccupancy::COMPANYID(_)
             )
         })
-        .map(|loc| match board.spaces.get(loc).unwrap() {
-            &LocationOccupancy::COMPANYID(company) => company,
+        .map(|loc| match *board.spaces.get(loc).unwrap() {
+            LocationOccupancy::COMPANYID(company) => company,
             _ => panic!("WTF the filter in requires_merger didn't work"),
         })
         .collect::<Vec<_>>()

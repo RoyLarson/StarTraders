@@ -89,11 +89,14 @@ impl Board {
         locations
     }
 
-    pub fn space(&self, loc: &Location) -> Option<LocationOccupancy> {
-        match self.spaces.get(loc) {
-            Some(occ) => Some(occ.clone()),
-            None => None,
-        }
+    pub fn space(&self, loc: &Location) -> Option<&LocationOccupancy> {
+        self.spaces.get(loc)
+    }
+}
+
+impl Default for Board {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -102,13 +105,13 @@ impl fmt::Display for Board {
         let space = "  ";
         let mut grid = String::from(space);
         for c in &self.columns {
-            grid.push(c.clone());
-            grid.push_str(space.clone());
+            grid.push(*c);
+            grid.push_str(&(*space));
         }
-        grid.push_str("\n");
+        grid.push('\n');
 
         for r in &self.rows {
-            let mut row = String::from(r.to_string());
+            let mut row = r.to_string();
 
             for c in &self.columns {
                 row.push_str(space);
@@ -118,7 +121,7 @@ impl fmt::Display for Board {
                 };
                 row.push_str(format!("{}", self.spaces.get(&loc).unwrap()).as_str());
             }
-            row.push_str("\n");
+            row.push('\n');
             grid.push_str(row.as_str());
         }
         write!(f, "{}", grid)

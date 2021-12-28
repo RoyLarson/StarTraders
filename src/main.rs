@@ -7,7 +7,7 @@ fn main() {
     println!("              **********   STAR TRADERS   **********");
     query_to_display_instructions();
 
-    let mut players: Players = Players::new();
+    let mut players: Vec<Player> = Vec::new();
 
     let num_players: u32 = Input::new()
         .with_prompt("How many players are playing:")
@@ -26,7 +26,8 @@ fn main() {
     println!("I will now shuffle the players");
     let mut rng = rand::thread_rng();
     players.shuffle(&mut rng);
-    println!("The player order is {:?}", players);
+    let players = Players { players };
+    println!("The player order is {}", players);
     let board_seed = Input::<usize>::new()
         .with_prompt("Input a game board number")
         .interact()

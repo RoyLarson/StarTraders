@@ -3,7 +3,7 @@ use std::cmp;
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Clone, Debug, Hash, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Location {
     pub x: String,
     pub y: String,
@@ -93,11 +93,11 @@ impl cmp::PartialEq<str> for Location {
     }
 }
 
-impl cmp::PartialEq<Location> for Location {
-    fn eq(&self, other: &Location) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
+// impl cmp::PartialEq<Location> for Location {
+//     fn eq(&self, other: &Location) -> bool {
+//         self.x == other.x && self.y == other.y
+//     }
+// }
 
 impl cmp::PartialEq<&Location> for Location {
     fn eq(&self, other: &&Location) -> bool {
