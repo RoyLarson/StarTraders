@@ -12,4 +12,4 @@ pub use gameboard::Board;
 pub use gamepieces::{LocationOccupancy, Moves};
 pub use instructions::{print_instructions, query_to_display_instructions};
 pub use location::Location;
-pub use player::Player;
+pub use player::{Player, Players};

@@ -1,9 +1,9 @@
 use std::cmp;
-use std::cmp::Ordering;
+
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Clone, Debug, Eq, Hash, PartialOrd)]
+#[derive(Clone, Debug, Hash, Eq, PartialOrd, Ord)]
 pub struct Location {
     pub x: String,
     pub y: String,
@@ -99,14 +99,20 @@ impl cmp::PartialEq<Location> for Location {
     }
 }
 
-impl cmp::Ord for Location {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.x != other.x {
-            return self.x.cmp(&other.x);
-        }
-        self.y.cmp(&other.y)
+impl cmp::PartialEq<&Location> for Location {
+    fn eq(&self, other: &&Location) -> bool {
+        self.x == other.x && self.y == other.y
     }
 }
+
+// impl cmp::Ord for Location {
+//     fn cmp(&self, other: &Self) -> Ordering {
+//         if self.x != other.x {
+//             return self.x.cmp(&other.x);
+//         }
+//         self.y.cmp(&other.y)
+//     }
+// }
 
 #[test]
 fn test_location_from_str() {

@@ -1,13 +1,14 @@
 use dialoguer::Input;
 use rand::prelude::*;
 
-use startraders::{play_game, query_to_display_instructions, setup_board, Board, Player};
+use startraders::{play_game, query_to_display_instructions, setup_board, Board, Player, Players};
 
 fn main() {
     println!("              **********   STAR TRADERS   **********");
     query_to_display_instructions();
 
-    let mut players: Vec<Player> = Vec::new();
+    let mut players: Players = Players::new();
+
     let num_players: u32 = Input::new()
         .with_prompt("How many players are playing:")
         .default(1)

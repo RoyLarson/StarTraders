@@ -17,6 +17,7 @@ pub enum PlayResult {
 
 pub fn play_game(mut board: Board, players: Vec<Player>) {
     let mut players_turn: usize = 0;
+
     for _ in 0..48 {
         print!("{}", &board);
         let current_player = &players[players_turn];
@@ -49,9 +50,9 @@ pub fn play_game(mut board: Board, players: Vec<Player>) {
             }
             PlayResult::NewCompany(company) => {
                 println!("             SPECIAL ANNOUNCEMENT !!!");
-                println!("");
+                println!();
                 println!("A NEW COMPANY HAS BEN FORMED: {}", company.name());
-                println!("");
+                println!();
             }
             PlayResult::Merger(merge) => {}
         }

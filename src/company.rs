@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum CompanyID {
     ALTAIR,
