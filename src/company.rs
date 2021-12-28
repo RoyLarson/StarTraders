@@ -32,3 +32,25 @@ impl fmt::Display for CompanyID {
         }
     }
 }
+
+pub struct Company {
+    pub name: CompanyID,
+    pub stock_price: usize,
+}
+
+impl Company {
+    pub fn new(company_id: CompanyID) -> Company {
+        Company {
+            name: company_id,
+            stock_price: 0,
+        }
+    }
+
+    pub fn update_stock_price(&mut self, num_open_spaces: u32, num_star_spaces: u32) {
+        self.stock_price += 500 * num_star_spaces as usize + 100 * num_open_spaces as usize;
+    }
+
+    pub fn requires_split(&self) -> bool {
+        self.stock_price > 3000
+    }
+}

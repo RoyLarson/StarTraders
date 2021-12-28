@@ -6,7 +6,7 @@ mod instructions;
 mod location;
 mod player;
 
-pub use company::CompanyID;
+pub use company::{Company, CompanyID};
 pub use game::{play_game, setup_board};
 pub use gameboard::Board;
 pub use gamepieces::{LocationOccupancy, Moves};

@@ -1,9 +1,9 @@
 use dialoguer::Input;
 use rand::prelude::*;
 use rand_pcg::Pcg64;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
-use crate::{Board, CompanyID, Location, LocationOccupancy, Moves, Players};
+use crate::{Board, Company, CompanyID, Location, LocationOccupancy, Moves, Players};
 
 pub struct Merge {
     from: CompanyID,
@@ -23,6 +23,7 @@ pub enum PlayResult {
 }
 
 pub fn play_game(mut board: Board, players: Players) {
+    let mut companies = HashMap::<CompanyID, Company>::new();
     for i in 0..48 {
         print!("{}", &board);
         let current_player = &players[i % players.len()];
@@ -54,12 +55,22 @@ pub fn play_game(mut board: Board, players: Players) {
                     > 0
                 {}
             }
-            PlayResult::AddSpaces(add) => {}
+            PlayResult::AddSpaces(add) => {
+                companies
+                    .get_mut(&add.company)
+                    .unwrap()
+                    .update_stock_price(add.open, add.stars);
+            }
             PlayResult::NewCompany(add) => {
                 println!("             SPECIAL ANNOUNCEMENT !!!");
                 println!();
                 println!("A NEW COMPANY HAS BEN FORMED: {}", add.company.name());
                 println!();
+                companies.insert(add.company.clone(), Company::new(add.company.clone()));
+                companies
+                    .get_mut(&add.company)
+                    .unwrap()
+                    .update_stock_price(add.open, add.stars);
             }
             PlayResult::Merger(merge) => {}
         }
