@@ -27,7 +27,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     players.shuffle(&mut rng);
     let players = Players { players };
-    println!("The player order is {}", players);
+    println!("The player order is\n{}", players);
     let board_seed = Input::<usize>::new()
         .with_prompt("Input a game board number")
         .interact()
