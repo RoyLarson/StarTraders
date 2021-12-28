@@ -102,8 +102,11 @@ impl Default for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut grid = String::from("MAP OF THE GALAXY\n");
-        grid.push_str("*******************");
+        let mut grid = String::from(format!("{:-^1$}", "  MAP OF THE GALAXY  ", 37));
+        grid.push('\n');
+        grid.push_str(format!("{:*^1$}", "", 37).as_str());
+        grid.push('\n');
+        grid.push(' ');
         let space = "  ";
         grid.push_str(space);
         for c in &self.columns {
