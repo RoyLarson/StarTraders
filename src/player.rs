@@ -6,9 +6,9 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Player {
-    name: String,
+    pub name: String,
     balance: u32,
-    stocks: HashMap<CompanyID, usize>,
+    stocks: HashMap<CompanyID, u32>,
 }
 
 impl Player {
@@ -25,11 +25,20 @@ impl Player {
             stocks,
         }
     }
+    pub fn add_stock(&mut self, company_id: &CompanyID, amount: u32) {
+        *self.stocks.entry(*company_id).or_insert(0) += amount;
+    }
 }
 
 impl fmt::Display for Player {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", &self.name.as_str())
+        write!(
+            f,
+            "Player: {}\nBalance: {}\nStocks: {:?}",
+            &self.name.as_str(),
+            self.balance,
+            self.stocks
+        )
     }
 }
 
