@@ -3,46 +3,32 @@ use rand::prelude::*;
 use rand_pcg::Pcg64;
 use std::collections::{HashMap, HashSet, VecDeque};
 
-use crate::{Board, Company, CompanyID, Location, LocationOccupancy, Moves, Players};
+use crate::{Board, Company, CompanyID, Location, LocationOccupancy, Moves, Player, Players};
 
-pub struct Merge {
+struct Merge {
     from: CompanyID,
     to: CompanyID,
 }
 
-pub struct AddSpaces {
+struct AddSpaces {
     company_id: CompanyID,
     open: u32,
     stars: u32,
 }
-pub enum PlayResult {
+enum PlayResult {
     NoCompanies,
     AddSpaces(AddSpaces),
     NewCompany(AddSpaces),
-    Merger(Merge),
+    Merger(AddSpaces, Merge),
 }
 
-pub fn play_game(mut board: Board, players: Players) {
+pub fn play_game(mut board: Board, mut players: Players) {
     let mut companies = HashMap::<CompanyID, Company>::new();
     for i in 0..48 {
         print!("{}", &board);
-        let current_player = &players[i % players.len()];
-        let mut legal_moves = get_legal_moves(&board);
-        legal_moves.sort();
+        let num_players = players.len();
+        let location = get_players_move(&board, &players, i);
 
-        println!("Player: {}", current_player);
-        println!("The moves are: {}", legal_moves);
-        let location = Input::<Location>::new()
-            .with_prompt(format!("{} what is your move", &current_player))
-            .validate_with(|input: &Location| -> Result<(), &str> {
-                if legal_moves.contains(input) {
-                    Ok(())
-                } else {
-                    Err("That is not a legal move")
-                }
-            })
-            .interact()
-            .unwrap();
         let result = play_move(&mut board, &location);
 
         match result {
@@ -62,18 +48,14 @@ pub fn play_game(mut board: Board, players: Players) {
                     .update_stock_price(add.open, add.stars);
             }
             PlayResult::NewCompany(add) => {
-                println!("             SPECIAL ANNOUNCEMENT !!!");
-                println!();
-                println!("A NEW COMPANY HAS BEN FORMED: {}", add.company_id.name());
-                println!();
-                companies.insert(add.company_id.clone(), Company::new(add.company_id.clone()));
+                create_new_company(&add, &mut companies, &mut players.players[i % num_players])
+            }
+            PlayResult::Merger(add, merge) => {
                 companies
                     .get_mut(&add.company_id)
                     .unwrap()
                     .update_stock_price(add.open, add.stars);
-                println!("{}", companies.get(&add.company_id).unwrap())
             }
-            PlayResult::Merger(merge) => {}
         }
     }
 }
@@ -90,7 +72,48 @@ pub fn setup_board(board: &mut Board, seed: usize) {
     }
 }
 
-pub fn get_legal_moves(board: &Board) -> Moves {
+fn create_new_company(
+    add: &AddSpaces,
+    companies: &mut HashMap<CompanyID, Company>,
+    player: &mut Player,
+) {
+    println!("{:^1$}", "SPECIAL ANNOUNCEMENT !!!", 37);
+    println!();
+    println!("A NEW COMPANY HAS BEN FORMED: {}", add.company_id.name());
+    println!();
+    companies.insert(add.company_id.clone(), Company::new(add.company_id.clone()));
+    companies
+        .get_mut(&add.company_id)
+        .unwrap()
+        .update_stock_price(add.open, add.stars);
+    println!("{}", companies.get(&add.company_id).unwrap());
+
+    player.add_stock(&add.company_id, 5);
+    println!("{}", player)
+}
+
+fn get_players_move(board: &Board, players: &Players, i: usize) -> Location {
+    let mut legal_moves = get_legal_moves(&board);
+    legal_moves.sort();
+    let current_player = &players[i % players.len()];
+
+    println!("{}\n", current_player);
+    println!("The moves are: {}\n", legal_moves);
+    let location = Input::<Location>::new()
+        .with_prompt(format!("{} what is your move", &current_player.name))
+        .validate_with(|input: &Location| -> Result<(), &str> {
+            if legal_moves.contains(input) {
+                Ok(())
+            } else {
+                Err("That is not a legal move")
+            }
+        })
+        .interact()
+        .unwrap();
+    location
+}
+
+fn get_legal_moves(board: &Board) -> Moves {
     let open_locations: Vec<Location> = board
         .spaces
         .keys()
@@ -103,7 +126,7 @@ pub fn get_legal_moves(board: &Board) -> Moves {
     Moves::new(open_locations)
 }
 
-pub fn legal_move(board: &Board, location: &Location) -> bool {
+fn legal_move(board: &Board, location: &Location) -> bool {
     let occupancy = *board.spaces.get(location).unwrap();
 
     if occupancy != LocationOccupancy::OPEN {
@@ -160,7 +183,7 @@ pub fn legal_move(board: &Board, location: &Location) -> bool {
     true
 }
 
-pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
+fn play_move(board: &mut Board, location: &Location) -> PlayResult {
     let neighbors = board.location_neighbors(location);
 
     let is_next_to_company = neighbors
@@ -234,13 +257,13 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                 let a_size = board
                     .spaces
                     .values()
-                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(company_a)))
+                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(_company_a)))
                     .count();
 
                 let b_size = board
                     .spaces
                     .values()
-                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(company_b)))
+                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(_company_b)))
                     .count();
 
                 let mut merge = Merge {
@@ -255,8 +278,21 @@ pub fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                     };
                 }
 
-                board.update_location(location.clone(), LocationOccupancy::COMPANYID(merge.to));
-                return PlayResult::Merger(merge);
+                let (open, stars) = update_all_joined_locations(
+                    board,
+                    location,
+                    LocationOccupancy::PLAYED,
+                    LocationOccupancy::COMPANYID(merge.to),
+                );
+
+                return PlayResult::Merger(
+                    AddSpaces {
+                        company_id: merge.to,
+                        open,
+                        stars,
+                    },
+                    merge,
+                );
             }
             companies => panic!(
                 "More than 2 companies returned from requires_merger {:?}",
