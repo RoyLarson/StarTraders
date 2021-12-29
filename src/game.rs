@@ -381,9 +381,6 @@ fn requires_merger(board: &Board, location: &Location) -> HashSet<CompanyID> {
             LocationOccupancy::COMPANYID(company) => company,
             _ => panic!("WTF the filter in requires_merger didn't work"),
         })
-        .collect::<Vec<_>>()
-        .iter()
-        .cloned()
         .collect::<HashSet<_>>();
 
     neighbor_companies
