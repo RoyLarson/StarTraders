@@ -32,15 +32,7 @@ pub fn play_game(mut board: Board, mut players: Players) {
         let result = play_move(&mut board, &location);
 
         match result {
-            PlayResult::NoCompanies => {
-                if board
-                    .spaces
-                    .values()
-                    .filter(|occ| matches!(*occ, &LocationOccupancy::COMPANYID(_)))
-                    .count()
-                    > 0
-                {}
-            }
+            PlayResult::NoCompanies => {}
             PlayResult::AddSpaces(add) => {
                 companies
                     .get_mut(&add.company_id)
@@ -55,8 +47,16 @@ pub fn play_game(mut board: Board, mut players: Players) {
                     .get_mut(&add.company_id)
                     .unwrap()
                     .update_stock_price(add.open, add.stars);
+                merge_companies(&mut board, &mut players, merge);
             }
         }
+        if board
+            .spaces
+            .values()
+            .filter(|occ| matches!(*occ, &LocationOccupancy::COMPANYID(_)))
+            .count()
+            > 0
+        {}
     }
 }
 
@@ -385,3 +385,5 @@ fn requires_merger(board: &Board, location: &Location) -> HashSet<CompanyID> {
 
     neighbor_companies
 }
+
+fn merge_companies(board: &mut Board, players: &mut Players, merge: Merge) {}
