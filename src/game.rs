@@ -10,6 +10,16 @@ struct Merge {
     to: CompanyID,
 }
 
+struct MergeResult {
+    player: Player,
+    merge_company: CompanyID,
+    into_company: CompanyID,
+    prior_merge_holdings: u32,
+    prior_into_holdings: u32,
+    new_stock_holdings: u32,
+    bonus_paid: u32,
+}
+
 struct AddSpaces {
     company_id: CompanyID,
     open: u32,
@@ -386,4 +396,20 @@ fn requires_merger(board: &Board, location: &Location) -> HashSet<CompanyID> {
     neighbor_companies
 }
 
-fn merge_companies(board: &mut Board, players: &mut Players, merge: Merge) {}
+fn merge_companies(
+    merge: Merge,
+    location: &Location,
+    board: &mut Board,
+    players: &mut Players,
+    companies: &mut HashMap<CompanyID, Company>,
+) {
+    update_all_joined_locations(
+        board,
+        location,
+        LocationOccupancy::COMPANYID(merge.from),
+        LocationOccupancy::COMPANYID(merge.to),
+    );
+    let (from_company_id, from_company) = companies.remove_entry(&merge.from).unwrap();
+    companies[&merge.to].stock_price += from_company.stock_price;
+    for player in players {}
+}
