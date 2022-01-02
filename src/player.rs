@@ -1,7 +1,7 @@
 use crate::CompanyID;
 use std::collections::HashMap;
 use std::fmt;
-use std::iter::{FromIterator, IntoIterator};
+use std::iter::IntoIterator;
 use std::ops::{Index, IndexMut};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -101,5 +101,32 @@ impl Index<usize> for Players {
 impl IndexMut<usize> for Players {
     fn index_mut(&mut self, i: usize) -> &mut Player {
         &mut self.players[i]
+    }
+}
+
+impl IntoIterator for Players {
+    type Item = Player;
+    type IntoIter = <Vec<Player> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.players.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Players {
+    type Item = &'a Player;
+    type IntoIter = <&'a Vec<Player> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.players.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Players {
+    type Item = &'a mut Player;
+    type IntoIter = <&'a mut Vec<Player> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.players.iter_mut()
     }
 }
