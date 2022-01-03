@@ -7,7 +7,7 @@ use std::ops::{Index, IndexMut};
 #[derive(Debug, PartialEq, Eq)]
 pub struct Player {
     pub name: String,
-    balance: u32,
+    balance: i32,
     stocks: HashMap<CompanyID, u32>,
 }
 
@@ -27,6 +27,26 @@ impl Player {
     }
     pub fn add_stock(&mut self, company_id: &CompanyID, amount: u32) {
         *self.stocks.entry(*company_id).or_insert(0) += amount;
+    }
+
+    pub fn get_stock(&self, company_id: &CompanyID) -> u32 {
+        match self.stocks.get(company_id) {
+            Some(x) => *x,
+            None => 0,
+        }
+    }
+
+    pub fn update_balance(&mut self, delta: i32) -> Result<bool, &str> {
+        let new_balance = self.balance + delta;
+        if new_balance >= 0 {
+            self.balance = new_balance;
+            return Ok(true);
+        }
+        Err("Insufficient Funds")
+    }
+
+    pub fn update_stock(&mut self, company_id: &CompanyID, new_value: u32) {
+        *self.stocks.entry(*company_id).or_insert(0) = new_value;
     }
 }
 
@@ -63,6 +83,14 @@ impl Players {
     }
     pub fn is_empty(&self) -> bool {
         self.players.len() == 0
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, Player> {
+        self.players.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Player> {
+        self.players.iter_mut()
     }
 }
 
