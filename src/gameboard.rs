@@ -38,7 +38,7 @@ impl Board {
         self.spaces.insert(location, occupancy);
     }
 
-    fn update_all_joined_locations(
+    pub fn update_all_joined_locations(
         &mut self,
         location: &Location,
         to_update: LocationOccupancy,

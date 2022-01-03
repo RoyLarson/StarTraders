@@ -217,7 +217,7 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
             if let Some(company) = determine_new_company(board) {
                 let occ = LocationOccupancy::COMPANYID(company);
                 let (open, stars) =
-                    update_all_joined_locations(board, location, LocationOccupancy::PLAYED, occ);
+                    board.update_all_joined_locations(location, LocationOccupancy::PLAYED, occ);
                 return PlayResult::NewCompany(AddSpaces {
                     company_id: company,
                     open,
@@ -229,7 +229,7 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
             Some(company) => {
                 let occ = LocationOccupancy::COMPANYID(company);
                 let (open, stars) =
-                    update_all_joined_locations(board, location, LocationOccupancy::PLAYED, occ);
+                    board.update_all_joined_locations(location, LocationOccupancy::PLAYED, occ);
                 return PlayResult::NewCompany(AddSpaces {
                     company_id: company,
                     open,
@@ -244,8 +244,7 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
             }
             companies if companies.len() == 1 => {
                 let company = companies.iter().cloned().collect::<Vec<CompanyID>>()[0];
-                let (open, stars) = update_all_joined_locations(
-                    board,
+                let (open, stars) = board.update_all_joined_locations(
                     location,
                     LocationOccupancy::PLAYED,
                     LocationOccupancy::COMPANYID(company),
@@ -286,8 +285,7 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                     };
                 }
 
-                let (open, stars) = update_all_joined_locations(
-                    board,
+                let (open, stars) = board.update_all_joined_locations(
                     location,
                     LocationOccupancy::PLAYED,
                     LocationOccupancy::COMPANYID(merge.acquirer),
@@ -309,43 +307,6 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
         },
     }
     PlayResult::NoCompanies
-}
-
-fn update_all_joined_locations(
-    board: &mut Board,
-    location: &Location,
-    to_update: LocationOccupancy,
-    new_occ: LocationOccupancy,
-) -> (u32, u32) {
-    let mut to_visit: VecDeque<Location> = VecDeque::new();
-    let mut count_open = 0 as u32;
-    let mut count_stars = 0 as u32;
-    to_visit.push_front(location.clone());
-
-    let mut visited = HashSet::new();
-
-    while !to_visit.is_empty() {
-        let loc = to_visit.pop_front().unwrap();
-        visited.insert(loc.clone());
-        to_visit.extend(
-            board
-                .location_neighbors(&loc)
-                .iter()
-                .filter(|loc| {
-                    (*board.spaces.get(loc).unwrap() == to_update) && !visited.contains(loc)
-                })
-                .cloned()
-                .collect::<VecDeque<Location>>(),
-        );
-        board.update_location(loc.clone(), new_occ);
-        count_open += 1;
-        count_stars += board
-            .location_neighbors(&loc)
-            .iter()
-            .filter(|loc| matches!(board.spaces.get(loc).unwrap(), LocationOccupancy::STAR))
-            .count() as u32;
-    }
-    (count_open, count_stars)
 }
 
 fn determine_new_company(board: &Board) -> Option<CompanyID> {
@@ -401,8 +362,7 @@ fn merge_companies(
     players: &mut Players,
     companies: &mut HashMap<CompanyID, Company>,
 ) -> Vec<MergeResult> {
-    update_all_joined_locations(
-        board,
+    board.update_all_joined_locations(
         location,
         LocationOccupancy::COMPANYID(merge.acquired),
         LocationOccupancy::COMPANYID(merge.acquirer),
