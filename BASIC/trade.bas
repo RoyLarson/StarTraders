@@ -246,6 +246,8 @@
 2240 F3=A3-3: IF F3<0 THEN F3=0:REM        OF A MERGER
 2250 F4=A4-3: IF F4<0 THEN F4=0
 2260 T=Q(F1)
+' Determine which company in neighboring space is largest
+' Store that in T1
 2270 T1=F1
 2280 IF Q(F2)>Q(F1) THEN T=Q(F2) ELSE 2300
 2290 T1=F2
@@ -253,6 +255,7 @@
 2310 T1=F3
 2320 IF Q(F4)>T THEN T=Q(F4) ELSE 2340
 2330 T1=F4
+' Determine other company to merge with store that in X
 2340 IF F1=T1 OR A1<4 THEN 2370
 2350 X=F1
 2360 GOSUB 2470
@@ -268,6 +271,9 @@
 2460 RETURN
 2470 PRINT Z1$
 2480 GOSUB 3370: REM     SUBROUTINE - PERFORMS CALCULATIONS
+' Find merger companies by iterating through data$
+' Store merge company name in C1$
+' Store result company name in C2$
 2490 RESTORE: REM         TO ACCOMPLISH A MERGER
 2500 READ N,C$
 2510 IF X<>N THEN 2500
@@ -287,8 +293,10 @@
 2660 PRINT "PLAYER";TAB(10);"OLD STOCK";TAB(22);"NEW STOCK";
 2670 PRINT TAB(34);"TOTAL HOLDINGS";TAB(53);"BONUS PAID"
 2680   FOR I=1 TO P1
-2690 GOSUB 490
-2700 PRINT TAB(10);S(X,I);TAB(22);INT((.5*S(X,I))+.5);
+2690 GOSUB 490 ' Prints player name
+' X is the company that is merged
+'T1 is the company that is the result
+2700 PRINT TAB(10);S(X,I);TAB(22);INT((.5*S(X,I))+.5); 
 2710 PRINT TAB(34);S(T1,I)+INT((.5*S(X,I))+.5);
 2720 X1=0
 2730    FOR I1=1 TO P1
