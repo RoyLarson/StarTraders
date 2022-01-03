@@ -1,6 +1,6 @@
 use crate::Location;
 use crate::LocationOccupancy;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt;
 
 pub struct Board {
@@ -36,6 +36,42 @@ impl Board {
 
     pub fn update_location(&mut self, location: Location, occupancy: LocationOccupancy) {
         self.spaces.insert(location, occupancy);
+    }
+
+    fn update_all_joined_locations(
+        &mut self,
+        location: &Location,
+        to_update: LocationOccupancy,
+        new_occ: LocationOccupancy,
+    ) -> (u32, u32) {
+        let mut to_visit: VecDeque<Location> = VecDeque::new();
+        let mut count_open = 0 as u32;
+        let mut count_stars = 0 as u32;
+        to_visit.push_front(location.clone());
+
+        let mut visited = HashSet::new();
+
+        while !to_visit.is_empty() {
+            let loc = to_visit.pop_front().unwrap();
+            visited.insert(loc.clone());
+            to_visit.extend(
+                self.location_neighbors(&loc)
+                    .iter()
+                    .filter(|loc| {
+                        (*self.spaces.get(loc).unwrap() == to_update) && !visited.contains(loc)
+                    })
+                    .cloned()
+                    .collect::<VecDeque<Location>>(),
+            );
+            self.update_location(loc.clone(), new_occ);
+            count_open += 1;
+            count_stars += self
+                .location_neighbors(&loc)
+                .iter()
+                .filter(|loc| matches!(self.spaces.get(loc).unwrap(), LocationOccupancy::STAR))
+                .count() as u32;
+        }
+        (count_open, count_stars)
     }
 
     pub fn location_neighbors(&self, location: &Location) -> Vec<Location> {
