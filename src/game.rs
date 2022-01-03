@@ -6,18 +6,16 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use crate::{Board, Company, CompanyID, Location, LocationOccupancy, Moves, Player, Players};
 
 struct Merge {
-    from: CompanyID,
-    to: CompanyID,
+    acquired: CompanyID,
+    acquirer: CompanyID,
 }
 
 struct MergeResult {
-    player: Player,
-    merge_company: CompanyID,
-    into_company: CompanyID,
+    player_name: String,
     prior_merge_holdings: u32,
     prior_into_holdings: u32,
     new_stock_holdings: u32,
-    bonus_paid: u32,
+    bonus_paid: i32,
 }
 
 struct AddSpaces {
@@ -57,7 +55,7 @@ pub fn play_game(mut board: Board, mut players: Players) {
                     .get_mut(&add.company_id)
                     .unwrap()
                     .update_stock_price(add.open, add.stars);
-                merge_companies(&mut board, &mut players, merge);
+                merge_companies(merge, &location, &mut board, &mut players, &mut companies);
             }
         }
         if board
@@ -98,7 +96,7 @@ fn create_new_company(
         .update_stock_price(add.open, add.stars);
     println!("{}", companies.get(&add.company_id).unwrap());
 
-    player.add_stock(&add.company_id, 5);
+    player.update_stock(&add.company_id, 5);
     println!("{}", player)
 }
 
@@ -277,14 +275,14 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                     .count();
 
                 let mut merge = Merge {
-                    from: company_b,
-                    to: company_a,
+                    acquired: company_b,
+                    acquirer: company_a,
                 };
 
                 if b_size > a_size {
                     merge = Merge {
-                        from: company_a,
-                        to: company_b,
+                        acquired: company_a,
+                        acquirer: company_b,
                     };
                 }
 
@@ -292,12 +290,12 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                     board,
                     location,
                     LocationOccupancy::PLAYED,
-                    LocationOccupancy::COMPANYID(merge.to),
+                    LocationOccupancy::COMPANYID(merge.acquirer),
                 );
 
                 return PlayResult::Merger(
                     AddSpaces {
-                        company_id: merge.to,
+                        company_id: merge.acquirer,
                         open,
                         stars,
                     },
@@ -402,14 +400,47 @@ fn merge_companies(
     board: &mut Board,
     players: &mut Players,
     companies: &mut HashMap<CompanyID, Company>,
-) {
+) -> Vec<MergeResult> {
     update_all_joined_locations(
         board,
         location,
-        LocationOccupancy::COMPANYID(merge.from),
-        LocationOccupancy::COMPANYID(merge.to),
+        LocationOccupancy::COMPANYID(merge.acquired),
+        LocationOccupancy::COMPANYID(merge.acquirer),
     );
-    let (from_company_id, from_company) = companies.remove_entry(&merge.from).unwrap();
-    companies[&merge.to].stock_price += from_company.stock_price;
-    for player in players {}
+    let (acquired_id, acquired) = companies.remove_entry(&merge.acquired).unwrap();
+    let acquirer_id = merge.acquirer;
+    let mut results = Vec::<MergeResult>::new();
+    let total_stock_held_of_merge_company: u32 = players
+        .iter()
+        .map(|player| player.get_stock(&merge.acquired))
+        .sum();
+
+    let merge_stock_price = companies.get(&acquired_id).unwrap().stock_price as u32;
+
+    companies.get_mut(&acquirer_id).unwrap().stock_price += acquired.stock_price;
+
+    for player in players.iter_mut() {
+        let merge_stock = player.get_stock(&acquired_id);
+        let into_stock = player.get_stock(&acquirer_id);
+        let converted_stock = (0.5 * merge_stock as f32 + 0.5).round() as u32;
+        let total_holdings = converted_stock + player.get_stock(&acquirer_id);
+        let player_bonus = (10.0
+            * (merge_stock as f32 / total_stock_held_of_merge_company as f32)
+            * (merge_stock_price as f32))
+            .round() as i32;
+
+        player.update_stock(&acquired_id, 0);
+        player.update_stock(&acquirer_id, total_holdings);
+        player.update_balance(player_bonus).unwrap();
+
+        results.push(MergeResult {
+            player_name: player.name.clone(),
+            prior_merge_holdings: merge_stock,
+            prior_into_holdings: into_stock,
+            new_stock_holdings: total_holdings,
+            bonus_paid: player_bonus,
+        })
+    }
+    companies.insert(acquired_id, Company::new(acquired_id));
+    results
 }
