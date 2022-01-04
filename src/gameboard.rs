@@ -41,8 +41,8 @@ impl Board {
     pub fn update_all_joined_locations(
         &mut self,
         location: &Location,
-        to_update: LocationOccupancy,
-        new_occ: LocationOccupancy,
+        current: LocationOccupancy,
+        updated: LocationOccupancy,
     ) -> (u32, u32) {
         let mut to_visit: VecDeque<Location> = VecDeque::new();
         let mut count_open = 0 as u32;
@@ -58,12 +58,12 @@ impl Board {
                 self.location_neighbors(&loc)
                     .iter()
                     .filter(|loc| {
-                        (*self.spaces.get(loc).unwrap() == to_update) && !visited.contains(loc)
+                        (*self.spaces.get(loc).unwrap() == current) && !visited.contains(loc)
                     })
                     .cloned()
                     .collect::<VecDeque<Location>>(),
             );
-            self.update_location(loc.clone(), new_occ);
+            self.update_location(loc.clone(), updated);
             count_open += 1;
             count_stars += self
                 .location_neighbors(&loc)
