@@ -401,6 +401,6 @@ fn merge_companies(
             bonus_paid: player_bonus,
         })
     }
-    companies.insert(acquired_id, Company::new(acquired_id));
+
     results
 }
