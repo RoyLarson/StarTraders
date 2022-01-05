@@ -33,6 +33,7 @@ impl fmt::Display for CompanyID {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Company {
     pub name: CompanyID,
     pub stock_price: usize,
