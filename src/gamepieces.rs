@@ -20,17 +20,9 @@ impl fmt::Display for LocationOccupancy {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Moves {
     moves: Vec<Location>,
-}
-
-impl Default for Moves {
-    fn default() -> Self {
-        Moves {
-            moves: Vec::<Location>::new(),
-        }
-    }
 }
 
 impl fmt::Display for Moves {
