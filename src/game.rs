@@ -1,15 +1,17 @@
 use dialoguer::Input;
 use rand::prelude::*;
 use rand_pcg::Pcg64;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 use crate::{Board, Company, CompanyID, Location, LocationOccupancy, Moves, Player, Players};
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Merge {
-    acquired: CompanyID,
-    acquirer: CompanyID,
+    company_a: CompanyID,
+    company_b: CompanyID,
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 struct MergeResult {
     player_name: String,
     prior_merge_holdings: u32,
@@ -18,11 +20,14 @@ struct MergeResult {
     bonus_paid: i32,
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct AddSpaces {
     company_id: CompanyID,
     open: u32,
     stars: u32,
 }
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 enum PlayResult {
     NoCompanies,
     AddSpaces(AddSpaces),
@@ -85,9 +90,9 @@ fn create_new_company(
     companies: &mut HashMap<CompanyID, Company>,
     player: &mut Player,
 ) {
-    println!("{:^1$}", "SPECIAL ANNOUNCEMENT !!!", 37);
+    println!("{:^1$}", "!!! SPECIAL ANNOUNCEMENT !!!", 37);
     println!();
-    println!("A NEW COMPANY HAS BEN FORMED: {}", add.company_id.name());
+    println!("A NEW COMPANY HAS BEN FORMED:\n{}", add.company_id.name());
     println!();
     companies.insert(add.company_id.clone(), Company::new(add.company_id.clone()));
     companies
@@ -213,8 +218,8 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
         (false, false, false) => {
             board.update_location(location.clone(), LocationOccupancy::PLAYED); // implements line 1230
         }
-        (false, _, true) => {
-            if let Some(company) = determine_new_company(board) {
+        (false, _, true) => match determine_new_company(board) {
+            Some(company) => {
                 let occ = LocationOccupancy::COMPANYID(company);
                 let (open, stars) =
                     board.update_all_joined_locations(location, LocationOccupancy::PLAYED, occ);
@@ -224,7 +229,8 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                     stars,
                 });
             }
-        }
+            None => board.update_location(location.clone(), LocationOccupancy::PLAYED),
+        },
         (false, true, _) => match determine_new_company(board) {
             Some(company) => {
                 let occ = LocationOccupancy::COMPANYID(company);
@@ -261,39 +267,20 @@ fn play_move(board: &mut Board, location: &Location) -> PlayResult {
                 let company_b = *companies.iter().next().unwrap();
                 companies.remove(&company_b);
 
-                let a_size = board
-                    .spaces
-                    .values()
-                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(_company_a)))
-                    .count();
-
-                let b_size = board
-                    .spaces
-                    .values()
-                    .filter(|occ| matches!(*occ, LocationOccupancy::COMPANYID(_company_b)))
-                    .count();
-
-                let mut merge = Merge {
-                    acquired: company_b,
-                    acquirer: company_a,
+                let merge = Merge {
+                    company_a: company_b,
+                    company_b: company_a,
                 };
-
-                if b_size > a_size {
-                    merge = Merge {
-                        acquired: company_a,
-                        acquirer: company_b,
-                    };
-                }
 
                 let (open, stars) = board.update_all_joined_locations(
                     location,
                     LocationOccupancy::PLAYED,
-                    LocationOccupancy::COMPANYID(merge.acquirer),
+                    LocationOccupancy::COMPANYID(merge.company_b),
                 );
 
                 return PlayResult::Merger(
                     AddSpaces {
-                        company_id: merge.acquirer,
+                        company_id: merge.company_b,
                         open,
                         stars,
                     },
@@ -362,22 +349,43 @@ fn merge_companies(
     players: &mut Players,
     companies: &mut HashMap<CompanyID, Company>,
 ) -> Vec<MergeResult> {
-    board.update_all_joined_locations(
-        location,
-        LocationOccupancy::COMPANYID(merge.acquired),
-        LocationOccupancy::COMPANYID(merge.acquirer),
+    println!("Merging: {:?}", merge);
+    let company_a = companies.get(&merge.company_a).unwrap().clone();
+    let company_b = companies.get(&merge.company_b).unwrap().clone();
+    let acquired_id;
+    let acquired;
+    let acquirer_id;
+
+    if company_a.stock_price > company_b.stock_price {
+        companies.remove_entry(&merge.company_b).unwrap();
+        acquired_id = &merge.company_b;
+        acquired = company_b;
+        acquirer_id = &merge.company_a;
+    } else {
+        companies.remove_entry(&merge.company_a).unwrap();
+        acquired_id = &merge.company_a;
+        acquired = company_a;
+        acquirer_id = &merge.company_b;
+    }
+
+    println!(
+        "Company: {:?}\nAcquirer: {:?}\nAcquired: {:?}\nAcquirer in Companies: {:?}\nAcquired in Companies: {:?}",
+        companies,
+        acquirer_id,
+        acquired_id,
+        companies.contains_key(acquirer_id),
+        companies.contains_key(&acquired_id)
     );
-    let (acquired_id, acquired) = companies.remove_entry(&merge.acquired).unwrap();
-    let acquirer_id = merge.acquirer;
+
     let mut results = Vec::<MergeResult>::new();
     let total_stock_held_of_merge_company: u32 = players
         .iter()
-        .map(|player| player.get_stock(&merge.acquired))
+        .map(|player| player.get_stock(&acquired_id))
         .sum();
 
-    let merge_stock_price = companies.get(&acquired_id).unwrap().stock_price as u32;
+    let merge_stock_price = acquired.stock_price as u32;
 
-    companies.get_mut(&acquirer_id).unwrap().stock_price += acquired.stock_price;
+    companies.get_mut(acquirer_id).unwrap().stock_price += acquired.stock_price;
 
     for player in players.iter_mut() {
         let merge_stock = player.get_stock(&acquired_id);
@@ -401,6 +409,11 @@ fn merge_companies(
             bonus_paid: player_bonus,
         })
     }
+    board.update_all_joined_locations(
+        location,
+        LocationOccupancy::COMPANYID(*acquired_id),
+        LocationOccupancy::COMPANYID(*acquirer_id),
+    );
 
     results
 }
