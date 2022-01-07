@@ -2,10 +2,7 @@ use dialoguer::Input;
 use itertools::sorted;
 use rand::prelude::*;
 use rand_pcg::Pcg64;
-use std::{
-    collections::{HashMap, HashSet},
-    ops::RangeBounds,
-};
+use std::collections::{HashMap, HashSet};
 
 use crate::{Board, Company, CompanyID, Location, LocationOccupancy, Moves, Player, Players};
 
