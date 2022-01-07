@@ -1,4 +1,5 @@
 use dialoguer::Input;
+use itertools::sorted;
 use rand::prelude::*;
 use rand_pcg::Pcg64;
 use std::collections::{HashMap, HashSet};
@@ -14,17 +15,17 @@ struct Merge {
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 struct MergeResult {
     player_name: String,
-    prior_merge_holdings: u32,
-    prior_into_holdings: u32,
-    new_stock_holdings: u32,
+    old_stock: i32,
+    new_stock: i32,
+    total_holdings: i32,
     bonus_paid: i32,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct AddSpaces {
     company_id: CompanyID,
-    open: u32,
-    stars: u32,
+    open: i32,
+    stars: i32,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -37,14 +38,15 @@ enum PlayResult {
 
 pub fn play_game(mut board: Board, mut players: Players) {
     let mut companies = HashMap::<CompanyID, Company>::new();
+    let num_players = players.len();
     for i in 0..48 {
+        let location;
         print!("{}", &board);
-        let num_players = players.len();
-        let location = get_players_move(&board, &players, i);
-
-        let result = play_move(&mut board, &location);
-
-        match result {
+        {
+            let current_player = &players.players[i % num_players];
+            location = get_players_move(&board, current_player);
+        }
+        match play_move(&mut board, &location) {
             PlayResult::NoCompanies => {}
             PlayResult::AddSpaces(add) => {
                 companies
@@ -60,16 +62,26 @@ pub fn play_game(mut board: Board, mut players: Players) {
                     .get_mut(&add.company_id)
                     .unwrap()
                     .update_stock_price(add.open, add.stars);
-                merge_companies(merge, &location, &mut board, &mut players, &mut companies);
+                let result =
+                    merge_companies(merge, &location, &mut board, &mut players, &mut companies);
+                player_merge_results(result);
             }
         }
-        if board
-            .spaces
-            .values()
-            .filter(|occ| matches!(*occ, &LocationOccupancy::COMPANYID(_)))
-            .count()
-            > 0
-        {}
+
+        for (company_id, company) in companies.iter_mut() {
+            if company.requires_split() {
+                split_stock(company_id, company, &mut players);
+            }
+        }
+        player_dividends_and_stock_purchase(&companies, &mut players[i % num_players])
+    }
+    println!("!!! END OF GAME !!!");
+    for player in &players {
+        let mut net_worth = player.get_balance();
+        for (company_id, company) in &companies {
+            net_worth += player.get_stock(company_id) * company.stock_price;
+        }
+        println!("PLAYER: {} NET WORTH: {}", player.name, net_worth);
     }
 }
 
@@ -94,7 +106,7 @@ fn create_new_company(
     println!();
     println!("A NEW COMPANY HAS BEN FORMED:\n{}", add.company_id.name());
     println!();
-    companies.insert(add.company_id.clone(), Company::new(add.company_id.clone()));
+    companies.insert(add.company_id, Company::new(add.company_id));
     companies
         .get_mut(&add.company_id)
         .unwrap()
@@ -105,10 +117,9 @@ fn create_new_company(
     println!("{}", player)
 }
 
-fn get_players_move(board: &Board, players: &Players, i: usize) -> Location {
-    let mut legal_moves = get_legal_moves(&board);
+fn get_players_move(board: &Board, current_player: &Player) -> Location {
+    let mut legal_moves = get_legal_moves(board);
     legal_moves.sort();
-    let current_player = &players[i % players.len()];
 
     println!("{}\n", current_player);
     println!("The moves are: {}\n", legal_moves);
@@ -349,9 +360,8 @@ fn merge_companies(
     players: &mut Players,
     companies: &mut HashMap<CompanyID, Company>,
 ) -> Vec<MergeResult> {
-    println!("Merging: {:?}", merge);
-    let company_a = companies.get(&merge.company_a).unwrap().clone();
-    let company_b = companies.get(&merge.company_b).unwrap().clone();
+    let company_a = *companies.get(&merge.company_a).unwrap();
+    let company_b = *companies.get(&merge.company_b).unwrap();
     let acquired_id;
     let acquired;
     let acquirer_id;
@@ -368,44 +378,35 @@ fn merge_companies(
         acquirer_id = &merge.company_b;
     }
 
-    println!(
-        "Company: {:?}\nAcquirer: {:?}\nAcquired: {:?}\nAcquirer in Companies: {:?}\nAcquired in Companies: {:?}",
-        companies,
-        acquirer_id,
-        acquired_id,
-        companies.contains_key(acquirer_id),
-        companies.contains_key(&acquired_id)
-    );
-
     let mut results = Vec::<MergeResult>::new();
-    let total_stock_held_of_merge_company: u32 = players
+    let total_stock_held_of_merge_company: i32 = players
         .iter()
-        .map(|player| player.get_stock(&acquired_id))
+        .map(|player| player.get_stock(acquired_id))
         .sum();
 
-    let merge_stock_price = acquired.stock_price as u32;
+    let merge_stock_price = acquired.stock_price as i32;
 
     companies.get_mut(acquirer_id).unwrap().stock_price += acquired.stock_price;
 
     for player in players.iter_mut() {
-        let merge_stock = player.get_stock(&acquired_id);
-        let into_stock = player.get_stock(&acquirer_id);
-        let converted_stock = (0.5 * merge_stock as f32 + 0.5).round() as u32;
-        let total_holdings = converted_stock + player.get_stock(&acquirer_id);
+        let merge_stock = player.get_stock(acquired_id);
+        let into_stock = player.get_stock(acquirer_id);
+        let converted_stock = (0.5 * merge_stock as f32 + 0.5).round() as i32;
+        let total_holdings = converted_stock + player.get_stock(acquirer_id);
         let player_bonus = (10.0
             * (merge_stock as f32 / total_stock_held_of_merge_company as f32)
             * (merge_stock_price as f32))
             .round() as i32;
 
-        player.update_stock(&acquired_id, 0);
-        player.update_stock(&acquirer_id, total_holdings);
+        player.update_stock(acquired_id, 0);
+        player.update_stock(acquirer_id, total_holdings);
         player.update_balance(player_bonus).unwrap();
 
         results.push(MergeResult {
             player_name: player.name.clone(),
-            prior_merge_holdings: merge_stock,
-            prior_into_holdings: into_stock,
-            new_stock_holdings: total_holdings,
+            old_stock: merge_stock,
+            new_stock: into_stock,
+            total_holdings,
             bonus_paid: player_bonus,
         })
     }
@@ -415,5 +416,105 @@ fn merge_companies(
         LocationOccupancy::COMPANYID(*acquirer_id),
     );
 
+    println!("{:^1$}", "!!! SPECIAL ANNOUNCEMENT !!!", 37);
+    println!();
+    println!(
+        "{} HAS BEEN MERGED INTO {}",
+        acquired_id.name(),
+        acquirer_id.name()
+    );
+
     results
+}
+
+fn player_merge_results(results: Vec<MergeResult>) {
+    for result in results {
+        println!(
+            "PLAYER: {}\n\tOLD STOCK: {}\n\tNEW STOCK: {}\n\tTOTAL HOLDINGS: {}\n\tBONUS PAID: {}",
+            result.player_name,
+            result.old_stock,
+            result.new_stock,
+            result.total_holdings,
+            result.bonus_paid
+        )
+    }
+}
+
+fn split_stock(company_id: &CompanyID, company: &mut Company, players: &mut Players) {
+    let prior_stock_price = company.stock_price as i32;
+    let new_stock_price = company.stock_price as i32 / 2_i32;
+
+    println!("{:^1$}", "!!! SPECIAL ANNOUNCEMENT !!!", 37);
+    println!();
+    println!("THE STOCK OF {} HAS SPLIT 2 FOR 1", company_id.name());
+    println!(
+        "ORIGINAL VALUE: {} NEW VALUE: {}",
+        &prior_stock_price, &new_stock_price
+    );
+
+    for player in players {
+        let orig_stock = player.get_stock(company_id) as i32;
+        let old_value = prior_stock_price * orig_stock;
+        let new_stock = (old_value as f32 / new_stock_price as f32).ceil() as i32;
+
+        player.add_stock(company_id, (new_stock - orig_stock) as i32);
+        println!(
+            "PLAYER: {} PREVIOUS HOLDINGS: {} NEW HOLDINGS: {}",
+            player.name,
+            orig_stock,
+            player.get_stock(company_id)
+        );
+    }
+    company.stock_price = new_stock_price;
+}
+
+fn player_dividends_and_stock_purchase(
+    companies: &HashMap<CompanyID, Company>,
+    current_player: &mut Player,
+) {
+    // Calculate dividends from owned stock
+    for (company_id, company) in companies {
+        current_player
+            .update_balance(
+                (0.05 * current_player.get_stock(company_id) as f32 * company.stock_price as f32)
+                    .round() as i32,
+            )
+            .expect("The current player could not add dividends");
+    }
+
+    // Allow for purchase of stock
+    for (company_id, company) in sorted(companies) {
+        println!(
+            "PLAYER: {} CURRENT BALANCE: {}",
+            current_player.name,
+            current_player.get_balance()
+        );
+        let stocks_to_purchase = Input::<u32>::new()
+            .default(0)
+            .with_prompt(format!(
+                "HOW MANY SHARES OF {} DO YOU WANT TO PURCHASE?\nCURRENT PRICE: {} MAX SHARES: {}",
+                company_id.name(),
+                company.stock_price,
+                current_player.get_balance() / company.stock_price
+            ))
+            .validate_with(|input: &u32| -> Result<(), _> {
+                match current_player.get_balance() >= (*input * company.stock_price as u32) as i32 {
+                    true => Ok(()),
+                    false => Err(format!(
+                        "Insufficient Funds: {} < {}",
+                        current_player.get_balance(),
+                        input * company.stock_price as u32,
+                    )),
+                }
+            })
+            .interact()
+            .unwrap();
+
+        let total_purchase: i32 = stocks_to_purchase as i32 * company.stock_price;
+
+        current_player.add_stock(company_id, stocks_to_purchase as i32);
+        current_player
+            .update_balance(-total_purchase)
+            .expect("Something in Roy's validator didn't work");
+    }
 }

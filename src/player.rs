@@ -8,7 +8,7 @@ use std::ops::{Index, IndexMut};
 pub struct Player {
     pub name: String,
     balance: i32,
-    stocks: HashMap<CompanyID, u32>,
+    stocks: HashMap<CompanyID, i32>,
 }
 
 impl Player {
@@ -25,27 +25,30 @@ impl Player {
             stocks,
         }
     }
-    pub fn add_stock(&mut self, company_id: &CompanyID, amount: u32) {
+    pub fn add_stock(&mut self, company_id: &CompanyID, amount: i32) {
         *self.stocks.entry(*company_id).or_insert(0) += amount;
     }
 
-    pub fn get_stock(&self, company_id: &CompanyID) -> u32 {
+    pub fn get_stock(&self, company_id: &CompanyID) -> i32 {
         match self.stocks.get(company_id) {
             Some(x) => *x,
             None => 0,
         }
     }
+    pub fn get_balance(&self) -> i32 {
+        self.balance
+    }
 
-    pub fn update_balance(&mut self, delta: i32) -> Result<bool, &str> {
+    pub fn update_balance(&mut self, delta: i32) -> Result<(), &str> {
         let new_balance = self.balance + delta;
         if new_balance >= 0 {
             self.balance = new_balance;
-            return Ok(true);
+            return Ok(());
         }
         Err("Insufficient Funds")
     }
 
-    pub fn update_stock(&mut self, company_id: &CompanyID, new_value: u32) {
+    pub fn update_stock(&mut self, company_id: &CompanyID, new_value: i32) {
         *self.stocks.entry(*company_id).or_insert(0) = new_value;
     }
 }

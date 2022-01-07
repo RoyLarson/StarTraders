@@ -43,10 +43,10 @@ impl Board {
         location: &Location,
         current: LocationOccupancy,
         updated: LocationOccupancy,
-    ) -> (u32, u32) {
+    ) -> (i32, i32) {
         let mut to_visit: VecDeque<Location> = VecDeque::new();
-        let mut count_open = 0 as u32;
-        let mut count_stars = 0 as u32;
+        let mut count_open = 0_i32;
+        let mut count_stars = 0_i32;
         to_visit.push_front(location.clone());
 
         let mut visited = HashSet::new();
@@ -69,7 +69,7 @@ impl Board {
                 .location_neighbors(&loc)
                 .iter()
                 .filter(|loc| matches!(self.spaces.get(loc).unwrap(), LocationOccupancy::STAR))
-                .count() as u32;
+                .count() as i32;
         }
         (count_open, count_stars)
     }
@@ -138,7 +138,7 @@ impl Default for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut grid = String::from(format!("{:-^1$}", "  MAP OF THE GALAXY  ", 37));
+        let mut grid = format!("{:-^1$}", "  MAP OF THE GALAXY  ", 37);
         grid.push('\n');
         grid.push_str(format!("{:*^1$}", "", 37).as_str());
         grid.push('\n');

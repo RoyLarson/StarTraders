@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, PartialOrd, Ord)]
 pub enum CompanyID {
     ALTAIR,
     BETELGEUSE,
@@ -33,10 +33,10 @@ impl fmt::Display for CompanyID {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, PartialOrd, Ord)]
 pub struct Company {
     pub name: CompanyID,
-    pub stock_price: usize,
+    pub stock_price: i32,
 }
 
 impl Company {
@@ -47,8 +47,8 @@ impl Company {
         }
     }
 
-    pub fn update_stock_price(&mut self, num_open_spaces: u32, num_star_spaces: u32) {
-        self.stock_price += 500 * num_star_spaces as usize + 100 * num_open_spaces as usize;
+    pub fn update_stock_price(&mut self, num_open_spaces: i32, num_star_spaces: i32) {
+        self.stock_price += 500 * num_star_spaces as i32 + 100 * num_open_spaces as i32;
     }
 
     pub fn requires_split(&self) -> bool {
