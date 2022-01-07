@@ -2,7 +2,10 @@ use dialoguer::Input;
 use itertools::sorted;
 use rand::prelude::*;
 use rand_pcg::Pcg64;
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::RangeBounds,
+};
 
 use crate::{Board, Company, CompanyID, Location, LocationOccupancy, Moves, Player, Players};
 
@@ -158,51 +161,48 @@ fn legal_move(board: &Board, location: &Location) -> bool {
         return false;
     }
 
-    // REMOVED BECAUSE THE THE LAST LOGIC
-    // DOES NOT ALLOW FOR VERY MANY PLACES
-    // // implements lines 680, 690, 700
-    // let has_companies = board
-    //     .spaces
-    //     .values()
-    //     .any(|occ| matches!(occ, LocationOccupancy::COMPANY(_)));
+    let loc_neighbors = board.location_neighbors(location);
+    let loc_neighbors_occ = loc_neighbors
+        .iter()
+        .map(|loc| *board.space(loc).unwrap())
+        .collect::<Vec<LocationOccupancy>>();
 
-    // if !has_companies {
-    //     return true;
-    // }
+    let num_companies = board
+        .spaces
+        .iter()
+        .filter(|(_, occ)| matches!(*occ, LocationOccupancy::COMPANYID(_)))
+        .map(|(_, occ)| occ)
+        .collect::<HashSet<_>>()
+        .len();
 
-    // let neighbors: Vec<LocationOccupancy> = board
-    //     .location_neighbors(&location)
-    //     .into_iter()
-    //     .map(|loc| board.spaces.get(&loc).unwrap())
-    //     .cloned()
-    //     .collect();
+    let num_company_types = 5;
 
-    // let mut neighbor_counts: HashMap<LocationOccupancy, usize> = HashMap::new();
+    let init_new_company = (loc_neighbors_occ.contains(&LocationOccupancy::STAR)
+        | loc_neighbors_occ.contains(&LocationOccupancy::PLAYED))
+        & (!loc_neighbors_occ
+            .iter()
+            .any(|occ| matches!(occ, LocationOccupancy::COMPANYID(_))));
 
-    // for occupancy in neighbors {
-    //     *neighbor_counts.entry(occupancy).or_insert(0) += 1;
-    // }
+    // Check if all companies are used
+    // if all companies are in play then check
+    // if the play would normally cause another company
+    // then it should not be allowed
 
-    // let company_counts = neighbor_counts
-    //     .iter()
-    //     .filter(|(occ, count)| matches!(*occ, LocationOccupancy::COMPANY(_)) && *count > &0)
-    //     .collect::<Vec<(&LocationOccupancy, &usize)>>()
-    //     .iter()
-    //     .count();
+    if (num_companies == num_company_types) & init_new_company {
+        return false;
+    }
 
-    // // implements lines 710, 720, 730, 740
-    // if company_counts > 0 {
-    //     return true;
-    // }
+    let num_neighbor_company_types = loc_neighbors_occ
+        .iter()
+        .filter(|occ| matches!(occ, LocationOccupancy::COMPANYID(_)))
+        .collect::<HashSet<_>>()
+        .len();
 
-    // // implements lines 750 - 860
-    // let next_to_played = neighbor_counts.get(&LocationOccupancy::PLAYED).is_some();
-    // let next_to_star = neighbor_counts.get(&LocationOccupancy::STAR).is_some();
-
-    // TODO: this line here keeps new companies from forming too often
-    // if (next_to_played || next_to_star) && (company_counts < 3) {
-    //     return false;
-    // }
+    // If because I don't have the logic to merge
+    // 3 or more companies don't allow those positions
+    if num_neighbor_company_types > 3 {
+        return false;
+    }
 
     true
 }
